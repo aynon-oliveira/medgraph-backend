@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 import app.models  # noqa: F401  (registra as tabelas)
 from app.core.database import Base, engine
-from app.routers import atendimentos, auth, health, usuarios
+from app.routers import atendimentos, auth, health, sincronizacao, usuarios
 
 
 @asynccontextmanager
@@ -21,7 +21,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="MEDGRAPH-AM API",
     description="Back-end da plataforma multimodal com IA e grafos para a Dengue no Amazonas.",
-    version="0.3.0",
+    version="0.4.0",
     lifespan=lifespan,
 )
 
@@ -29,3 +29,4 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(usuarios.router)
 app.include_router(atendimentos.router)
+app.include_router(sincronizacao.router)
