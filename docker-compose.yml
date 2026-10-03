@@ -44,6 +44,7 @@ services:
         condition: service_started
     volumes:
       - ./app:/code/app   # recarrega a API ao salvar o código
+      - ./tests:/code/tests
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
