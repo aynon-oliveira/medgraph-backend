@@ -49,6 +49,7 @@ def _para_saida(a: Atendimento) -> AtendimentoOut:
         status_sincronizacao=a.status_sincronizacao,
         status_validacao=a.status_validacao,
         parecer_medico=a.parecer_medico,
+        encaminhamento=a.encaminhamento,
         atualizado_em=a.atualizado_em,
         resultado=ResultadoInferenciaOut.model_validate(a.resultado) if a.resultado else None,
     )

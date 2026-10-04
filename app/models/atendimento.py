@@ -52,6 +52,7 @@ class Atendimento(Base):
         Enum(StatusValidacao, name="status_validacao"), default=StatusValidacao.PENDENTE
     )
     parecer_medico: Mapped[str | None] = mapped_column(Text, nullable=True)
+    encaminhamento: Mapped[str | None] = mapped_column(Text, nullable=True)  # RF08: encaminhamento definitivo
 
     # RN06: em conflito entre dados do mesmo nível, vale o timestamp mais recente
     atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_agora, onupdate=_agora)

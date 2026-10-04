@@ -83,5 +83,6 @@ class AtendimentoOut(BaseModel):
     status_sincronizacao: StatusSincronizacao
     status_validacao: StatusValidacao
     parecer_medico: str | None = None
+    encaminhamento: str | None = None
     atualizado_em: datetime
     resultado: ResultadoInferenciaOut | None = None
