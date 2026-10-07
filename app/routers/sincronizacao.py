@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from geoalchemy2.shape import from_shape
 from pydantic import ValidationError
 from shapely.geometry import Point
@@ -18,6 +18,7 @@ from app.models import (
     StatusValidacao,
     Usuario,
 )
+from app.services.neo4j_service import projetar_em_segundo_plano
 from app.schemas.sincronizacao import (
     AtendimentoSync,
     ItemSync,
@@ -86,6 +87,7 @@ def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSyn
             paciente_id=paciente.id,
             data_hora=dados.data_hora,
             relato_texto=dados.relato_texto,
+            sintomas=dados.sintomas,
             relato_voz_path=dados.relato_voz_path,
             imagem_exantema_path=dados.imagem_exantema_path,
             localizacao=ponto,
@@ -129,6 +131,7 @@ def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSyn
 
     existente.data_hora = dados.data_hora
     existente.relato_texto = dados.relato_texto
+    existente.sintomas = dados.sintomas
     existente.relato_voz_path = dados.relato_voz_path
     existente.imagem_exantema_path = dados.imagem_exantema_path
     existente.localizacao = ponto
@@ -147,6 +150,7 @@ def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSyn
 @router.post("/sincronizar", response_model=SincronizacaoOut)
 def sincronizar(
     lote: SincronizacaoIn,
+    segundo_plano: BackgroundTasks,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(require_perfil(Perfil.ACS)),
 ):
@@ -191,6 +195,15 @@ def sincronizar(
                 )
             )
     db.commit()
+
+    # RF09: só o que mudou de fato vai para o grafo (se o Neo4j falhar, a sincronização segue)
+    mudaram = [
+        i.id
+        for i in processados
+        if i.situacao in (SituacaoSync.CRIADO, SituacaoSync.ATUALIZADO) and i.id is not None
+    ]
+    if mudaram:
+        segundo_plano.add_task(projetar_em_segundo_plano, mudaram)
 
     itens = processados + resultados  # os processados (ALTO primeiro) vêm antes dos inválidos
     por_situacao = lambda *s: sum(1 for i in itens if i.situacao in s)  # noqa: E731

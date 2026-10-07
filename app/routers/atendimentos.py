@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from geoalchemy2.shape import from_shape, to_shape
 from shapely.geometry import Point
 from sqlalchemy import select
@@ -17,6 +17,7 @@ from app.models import (
     StatusValidacao,
     Usuario,
 )
+from app.services.neo4j_service import projetar_em_segundo_plano
 from app.schemas.atendimento import (
     AtendimentoCreate,
     AtendimentoOut,
@@ -37,6 +38,7 @@ def _para_saida(a: Atendimento) -> AtendimentoOut:
         paciente=PacienteOut.model_validate(a.paciente),
         data_hora=a.data_hora,
         relato_texto=a.relato_texto,
+        sintomas=list(a.sintomas or []),
         relato_voz_path=a.relato_voz_path,
         imagem_exantema_path=a.imagem_exantema_path,
         latitude=ponto.y,
@@ -66,6 +68,7 @@ def _carregar(db: Session, atendimento_id: uuid.UUID) -> Atendimento | None:
 @router.post("", response_model=AtendimentoOut, status_code=status.HTTP_201_CREATED)
 def criar_atendimento(
     dados: AtendimentoCreate,
+    segundo_plano: BackgroundTasks,
     db: Session = Depends(get_db),
     agente: Usuario = Depends(require_perfil(Perfil.ACS)),  # só o ACS registra atendimentos
 ):
@@ -93,6 +96,7 @@ def criar_atendimento(
         paciente_id=paciente.id,
         data_hora=dados.data_hora,
         relato_texto=dados.relato_texto,
+        sintomas=dados.sintomas,
         relato_voz_path=dados.relato_voz_path,
         imagem_exantema_path=dados.imagem_exantema_path,
         localizacao=from_shape(Point(dados.longitude, dados.latitude), srid=4326),
@@ -118,6 +122,7 @@ def criar_atendimento(
         )
 
     db.commit()
+    segundo_plano.add_task(projetar_em_segundo_plano, [atendimento.id])  # RF09: atualiza o grafo
     return _para_saida(_carregar(db, atendimento.id))
 
 

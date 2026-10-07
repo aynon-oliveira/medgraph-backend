@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from geoalchemy2 import Geography
 from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -31,6 +31,8 @@ class Atendimento(Base):
 
     data_hora: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     relato_texto: Mapped[str | None] = mapped_column(Text, nullable=True)       # transcrição do áudio
+    # Sintomas extraídos do relato pelo app (viram nós NoSintoma no grafo, RF09)
+    sintomas: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
     relato_voz_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
     imagem_exantema_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
 

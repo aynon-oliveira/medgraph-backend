@@ -1,28 +1,34 @@
-﻿import pytest
-from fastapi.testclient import TestClient
-from app.main import app
-from app.core.database import SessionLocal, engine, Base
+"""Configuração comum dos testes.
 
-@pytest.fixture(scope="session")
-def client():
-    with TestClient(app) as c:
-        yield c
+Os testes criam atendimentos de mentira. Como cada atendimento também vai para o grafo,
+ao final da sessão removemos do Neo4j o que ficou "órfão" (sem correspondência no PostgreSQL).
+Dados reais não são tocados: pacientes que existem no PostgreSQL permanecem no grafo.
+"""
+import logging
 
-@pytest.fixture
-def token_headers(client):
-    # Regista ou autentica o utilizador de teste para gerar o token JWT
-    login_response = client.post(
-        "/auth/login",
-        data={"username": "gestor@medgraph.com", "password": "password123"}
-    )
-    if login_response.status_code != 200:
-        login_response = client.post(
-            "/api/v1/auth/login",
-            data={"username": "gestor@medgraph.com", "password": "password123"}
-        )
-    
-    if login_response.status_code == 200:
-        token = login_response.json().get("access_token")
-        return {"Authorization": f"Bearer {token}"}
-    
-    return {}
+import pytest
+from sqlalchemy import select
+
+from app.core.database import SessionLocal
+from app.core.neo4j_client import fechar_driver, neo4j_session
+from app.models import Paciente
+
+logger = logging.getLogger("medgraph.testes")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def limpar_grafo_de_testes():
+    yield
+    try:
+        with SessionLocal() as db:
+            ids_reais = [str(i) for i in db.scalars(select(Paciente.id)).all()]
+        with neo4j_session() as session:
+            session.run(
+                "MATCH (p:NoPaciente) WHERE NOT p.pacienteId IN $ids DETACH DELETE p", ids=ids_reais
+            ).consume()
+            session.run("MATCH (n:NoSintoma) WHERE NOT (n)<-[:APRESENTA]-() DELETE n").consume()
+            session.run("MATCH (l:NoLocalidade) WHERE NOT (l)--() DELETE l").consume()
+    except Exception:  # noqa: BLE001
+        logger.warning("Não foi possível limpar o grafo após os testes.", exc_info=True)
+    finally:
+        fechar_driver()

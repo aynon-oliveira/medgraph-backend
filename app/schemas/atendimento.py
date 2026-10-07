@@ -2,9 +2,19 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import NivelRisco, StatusSincronizacao, StatusValidacao
+
+
+def normalizar_sintomas(valores: list[str]) -> list[str]:
+    """Padroniza os nomes (minúsculas, sem espaços sobrando, sem repetição) para o grafo."""
+    vistos: list[str] = []
+    for valor in valores:
+        nome = " ".join(valor.strip().lower().split())[:80]
+        if nome and nome not in vistos:
+            vistos.append(nome)
+    return vistos
 
 
 class PacienteIn(BaseModel):
@@ -44,6 +54,7 @@ class AtendimentoCreate(BaseModel):
 
     data_hora: datetime
     relato_texto: str | None = None
+    sintomas: list[str] = Field(default_factory=list, max_length=30)
     relato_voz_path: str | None = Field(default=None, max_length=255)
     imagem_exantema_path: str | None = Field(default=None, max_length=255)
 
@@ -56,6 +67,11 @@ class AtendimentoCreate(BaseModel):
 
     nivel_risco: NivelRisco | None = None
     resultado: ResultadoInferenciaIn | None = None
+
+    @field_validator("sintomas")
+    @classmethod
+    def padronizar_sintomas(cls, v: list[str]) -> list[str]:
+        return normalizar_sintomas(v)
 
     @model_validator(mode="after")
     def paciente_ou_id(self):
@@ -71,6 +87,7 @@ class AtendimentoOut(BaseModel):
     paciente: PacienteOut
     data_hora: datetime
     relato_texto: str | None = None
+    sintomas: list[str] = Field(default_factory=list)
     relato_voz_path: str | None = None
     imagem_exantema_path: str | None = None
     latitude: float

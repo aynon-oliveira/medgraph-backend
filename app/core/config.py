@@ -1,5 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Endereços de telas de desenvolvimento que podem chamar a API pelo navegador.
+# 5500 = Live Server do VS Code ou "python -m http.server 5500"; 3000 e 5173 = React/Vite; 8080 = servidor simples.
+ORIGENS_PADRAO = (
+    "http://localhost:5500,http://127.0.0.1:5500,"
+    "http://localhost:3000,http://localhost:5173,http://localhost:8080"
+)
+
 
 class Settings(BaseSettings):
     """Configurações lidas das variáveis de ambiente (.env)."""
@@ -13,7 +20,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-only-change-me"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Lista separada por vírgulas dos endereços (origens) autorizados a chamar a API pelo navegador.
+    CORS_ORIGINS: str = ORIGENS_PADRAO
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()

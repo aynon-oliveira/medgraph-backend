@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import NivelRisco
-from app.schemas.atendimento import PacienteIn, ResultadoInferenciaIn
+from app.schemas.atendimento import PacienteIn, ResultadoInferenciaIn, normalizar_sintomas
 
 
 class PacienteSync(PacienteIn):
@@ -24,6 +24,7 @@ class AtendimentoSync(BaseModel):
     atualizado_em: datetime  # última alteração no celular (usado na regra RN06)
 
     relato_texto: str | None = None
+    sintomas: list[str] = Field(default_factory=list, max_length=30)
     relato_voz_path: str | None = Field(default=None, max_length=255)
     imagem_exantema_path: str | None = Field(default=None, max_length=255)
 
@@ -36,6 +37,11 @@ class AtendimentoSync(BaseModel):
 
     nivel_risco: NivelRisco | None = None
     resultado: ResultadoInferenciaIn | None = None
+
+    @field_validator("sintomas")
+    @classmethod
+    def padronizar_sintomas(cls, v: list[str]) -> list[str]:
+        return normalizar_sintomas(v)
 
     @field_validator("data_hora", "atualizado_em")
     @classmethod
@@ -57,8 +63,10 @@ _EXEMPLO = {
             "data_hora": "2026-10-03T10:30:00-04:00",
             "atualizado_em": "2026-10-03T10:35:00-04:00",
             "relato_texto": "Febre alta e dor atrás dos olhos",
+            "sintomas": ["febre alta", "dor retro-orbitária"],
             "latitude": -3.119,
             "longitude": -60.0217,
+            "bairro": "Centro",
             "municipio": "Manaus",
             "resultado": {
                 "score_probabilidade": 0.82,
