@@ -6,7 +6,7 @@ from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import decodificar_token
+from app.core.security import decodificar_token, token_vale_apos_troca_de_senha
 from app.models import Perfil, Usuario
 
 # tokenUrl faz o botão "Authorize" do /docs funcionar
@@ -27,7 +27,9 @@ def _usuario_do_token(token: str, db: Session) -> Usuario:
     except (JWTError, KeyError, ValueError):
         raise _NAO_AUTENTICADO
     usuario = db.get(Usuario, usuario_id)
-    if usuario is None or not usuario.ativo:
+    # Usuário desativado perde o acesso NA HORA (mesmo com token ainda dentro do prazo);
+    # e trocar a senha derruba as sessões abertas antes da troca.
+    if usuario is None or not usuario.ativo or not token_vale_apos_troca_de_senha(payload, usuario.senha_alterada_em):
         raise _NAO_AUTENTICADO
     return usuario
 

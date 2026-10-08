@@ -1,0 +1,55 @@
+# Modo PRODUÇÃO / demonstração para a banca.
+# Diferenças do docker-compose.yml (desenvolvimento):
+#   - AMBIENTE=producao: a API RECUSA subir com SECRET_KEY/senhas de exemplo e esconde o /docs;
+#   - sem --reload e sem montar a pasta do código (roda a imagem fechada);
+#   - o PostgreSQL e o Neo4j NÃO ficam abertos para fora do Docker (só a API, na porta 8000).
+#
+# Uso:   docker compose -f docker-compose.prod.yml up -d --build
+# Parar: docker compose -f docker-compose.prod.yml down
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
+    volumes:
+      - neo4jdata_prod:/data
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AMBIENTE: producao
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      NEO4J_URI: bolt://neo4j:7687
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      neo4j:
+        condition: service_started
+    volumes:
+      - uploads_prod:/code/uploads
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+volumes:
+  pgdata_prod:
+  neo4jdata_prod:
+  uploads_prod:

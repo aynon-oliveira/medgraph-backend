@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from geoalchemy2.shape import from_shape, to_shape
 from shapely.geometry import Point
 from sqlalchemy import select
@@ -17,6 +17,7 @@ from app.models import (
     StatusValidacao,
     Usuario,
 )
+from app.services import auditoria_service
 from app.services.neo4j_service import projetar_em_segundo_plano
 from app.schemas.atendimento import (
     AtendimentoCreate,
@@ -128,6 +129,7 @@ def criar_atendimento(
 
 @router.get("", response_model=list[AtendimentoOut])
 def listar_atendimentos(
+    request: Request,
     nivel_risco: NivelRisco | None = None,
     status_validacao: StatusValidacao | None = None,
     limit: int = Query(50, ge=1, le=200),
@@ -146,12 +148,17 @@ def listar_atendimentos(
     if status_validacao is not None:
         consulta = consulta.where(Atendimento.status_validacao == status_validacao)
 
-    consulta = consulta.order_by(Atendimento.data_hora.desc()).limit(limit).offset(offset)
-    return [_para_saida(a) for a in db.scalars(consulta).all()]
+    consulta = consulta.order_by(Atendimento.data_hora.desc(), Atendimento.id).limit(limit).offset(offset)  # id desempata: paginação estável
+    saida = [_para_saida(a) for a in db.scalars(consulta).all()]
+    auditoria_service.registrar_acesso(
+        db, usuario, auditoria_service.LISTAR_ATENDIMENTOS, "atendimento", request=request, detalhe=f"{len(saida)} registros"
+    )
+    return saida
 
 
 @router.get("/{atendimento_id}", response_model=AtendimentoOut)
 def obter_atendimento(
+    request: Request,
     atendimento_id: uuid.UUID,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
@@ -160,4 +167,8 @@ def obter_atendimento(
     # Para o ACS, atendimento de outro agente aparece como "não encontrado"
     if atendimento is None or (usuario.perfil == Perfil.ACS and atendimento.agente_id != usuario.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Atendimento não encontrado.")
-    return _para_saida(atendimento)
+    saida = _para_saida(atendimento)
+    auditoria_service.registrar_acesso(
+        db, usuario, auditoria_service.LER_ATENDIMENTO, "atendimento", atendimento_id, request
+    )
+    return saida

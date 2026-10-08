@@ -164,8 +164,10 @@ def test_acs_lista_so_os_seus_e_gestor_lista_todos(client, acs1, acs2, gestor):
     assert meu["id"] in ids_acs1
     assert outro["id"] not in ids_acs1
 
-    ids_gestor = {a["id"] for a in client.get("/atendimentos?limit=200", headers=gestor).json()}
-    assert meu["id"] in ids_gestor and outro["id"] in ids_gestor
+    # O gestor enxerga os atendimentos de todos os agentes. Consulta direta por id (não depende de o
+    # banco ter mais ou menos de 200 registros, como dependia a leitura da primeira página da lista).
+    assert client.get(f"/atendimentos/{meu['id']}", headers=gestor).status_code == 200
+    assert client.get(f"/atendimentos/{outro['id']}", headers=gestor).status_code == 200
 
 
 def test_acs_nao_acessa_atendimento_de_outro_agente(client, acs1, acs2):

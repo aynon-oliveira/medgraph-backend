@@ -5,15 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 import app.models  # noqa: F401  (registra as tabelas)
-from app.core.config import settings
+from app.core.config import exigir_config_segura, settings
 from app.core.database import Base, engine
 from app.core.neo4j_client import fechar_driver
-from app.routers import atendimentos, auth, grafo, health, mapa, sincronizacao, usuarios, validacoes
+from app.routers import atendimentos, auditoria, auth, grafo, health, mapa, midia, projecao, sincronizacao, usuarios, validacoes
 from app.services.neo4j_service import garantir_esquema
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # 0) Em produção, recusa subir com chave/senha de exemplo (passo 13).
+    exigir_config_segura()
+
     # 1) Extensão geográfica e tabelas: é isto que permite subir o projeto em um banco novo.
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
@@ -26,6 +29,9 @@ async def lifespan(_: FastAPI):
             text("ALTER TABLE atendimentos ADD COLUMN IF NOT EXISTS sintomas VARCHAR[] NOT NULL DEFAULT '{}'")
         )
 
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS senha_alterada_em TIMESTAMPTZ"))
+
     # 3) Restrições de unicidade do grafo. Se o Neo4j não responder, a API sobe mesmo assim.
     garantir_esquema()
 
@@ -37,7 +43,11 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="MEDGRAPH-AM API",
     description="Back-end da plataforma multimodal com IA e grafos para a Dengue no Amazonas.",
-    version="0.7.0",
+    version="0.12.0",
+    # Em produção a documentação interativa fica escondida.
+    docs_url=None if settings.em_producao else "/docs",
+    redoc_url=None if settings.em_producao else "/redoc",
+    openapi_url=None if settings.em_producao else "/openapi.json",
     lifespan=lifespan,
 )
 
@@ -55,9 +65,12 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(usuarios.router)
+app.include_router(auditoria.router)
 app.include_router(atendimentos.router)
+app.include_router(midia.router)
 app.include_router(validacoes.router)
 app.include_router(sincronizacao.router)
 app.include_router(grafo.router)
 app.include_router(mapa.router)
+app.include_router(projecao.router)
 app.include_router(health.router)

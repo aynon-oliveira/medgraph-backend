@@ -167,18 +167,29 @@ def test_outro_medico_nao_revalida_mas_o_mesmo_pode(client, acs, medico1, medico
     assert r.json()["parecer_medico"] == ajuste["parecer"]
 
 
+def _fila_completa(client, cab):
+    """Lê a fila inteira, página por página (a fila é global: pode ter mais de 200 itens)."""
+    ids, offset = [], 0
+    while True:
+        pagina = client.get("/validacoes/fila", params={"limit": 200, "offset": offset}, headers=cab).json()
+        ids.extend(a["id"] for a in pagina)
+        if len(pagina) < 200:
+            return ids
+        offset += 200
+
+
 def test_fila_mostra_alto_risco_primeiro_e_remove_validados(client, acs, medico1):
     baixo = _novo_atendimento(client, acs)
     alto = _novo_atendimento(
         client, acs, resultado={"score_probabilidade": 0.9, "sinais_alarme": ["vômitos persistentes"]}
     )
 
-    fila = [a["id"] for a in client.get("/validacoes/fila?limit=200", headers=medico1).json()]
+    fila = _fila_completa(client, medico1)
     assert baixo in fila and alto in fila
     assert fila.index(alto) < fila.index(baixo)
 
     _validar(client, medico1, alto)
-    fila = [a["id"] for a in client.get("/validacoes/fila?limit=200", headers=medico1).json()]
+    fila = _fila_completa(client, medico1)
     assert alto not in fila
     assert baixo in fila
 

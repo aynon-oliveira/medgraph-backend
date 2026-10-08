@@ -27,6 +27,8 @@ class Usuario(Base):
     departamento: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Gestor
 
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Passo 15: quando a senha foi trocada/redefinida. Tokens emitidos ANTES disso deixam de valer.
+    senha_alterada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

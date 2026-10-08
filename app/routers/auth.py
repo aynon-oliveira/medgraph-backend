@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
@@ -7,7 +9,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_user_optional
 from app.core.security import criar_token, hash_senha, verificar_senha
 from app.models import Perfil, Usuario
-from app.schemas.usuario import Token, UsuarioCreate, UsuarioOut
+from app.schemas.usuario import MensagemOut, Token, TrocarSenhaIn, UsuarioCreate, UsuarioOut, problemas_da_senha
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -86,3 +88,26 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 def me(usuario: Usuario = Depends(get_current_user)):
     """Dados de quem está logado."""
     return usuario
+
+
+@router.post("/trocar-senha", response_model=MensagemOut)
+def trocar_senha(
+    dados: TrocarSenhaIn,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
+):
+    """O próprio usuário troca a senha. Depois da troca, TODOS os tokens antigos deixam de valer
+    (inclusive o desta chamada): é preciso entrar de novo."""
+    # 400 (e não 401) para a tela não confundir "senha atual errada" com "sessão expirada"
+    if not verificar_senha(dados.senha_atual, usuario.senha_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Senha atual incorreta.")
+    if dados.senha_nova == dados.senha_atual:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A senha nova deve ser diferente da atual.")
+    problemas = problemas_da_senha(dados.senha_nova, usuario.email, usuario.nome)
+    if problemas:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=" ".join(problemas))
+
+    usuario.senha_hash = hash_senha(dados.senha_nova)
+    usuario.senha_alterada_em = datetime.now(timezone.utc)
+    db.commit()
+    return MensagemOut(detail="Senha alterada. Entre novamente com a senha nova.")

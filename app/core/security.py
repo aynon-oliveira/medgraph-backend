@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timedelta, timezone
 
 from jose import jwt
@@ -22,10 +23,18 @@ def verificar_senha(senha: str, senha_hash: str) -> bool:
 def criar_token(usuario_id, perfil: Perfil) -> str:
     """Gera o JWT. Guarda o id (sub), o perfil e a data de expiração."""
     expira = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    dados = {"sub": str(usuario_id), "perfil": perfil.value, "exp": expira}
+    # "emitido_em" tem precisão de microssegundos: permite invalidar tokens antigos quando a senha muda.
+    dados = {"sub": str(usuario_id), "perfil": perfil.value, "exp": expira, "emitido_em": time.time()}
     return jwt.encode(dados, settings.SECRET_KEY, algorithm=ALGORITMO)
 
 
 def decodificar_token(token: str) -> dict:
     """Valida a assinatura e a expiração. Lança JWTError se o token for inválido."""
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITMO])
+
+
+def token_vale_apos_troca_de_senha(payload: dict, senha_alterada_em: datetime | None) -> bool:
+    """False se o token foi emitido antes da última troca/redefinição de senha do usuário."""
+    if senha_alterada_em is None:
+        return True
+    return float(payload.get("emitido_em", 0)) > senha_alterada_em.timestamp()
