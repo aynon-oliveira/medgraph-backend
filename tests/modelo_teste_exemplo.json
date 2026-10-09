@@ -1,0 +1,218 @@
+{
+  "versao": "risco-gravidade-lr-20261009",
+  "tipo": "regressao_logistica",
+  "alvo_chave": "gravidade",
+  "rotulo_probabilidade": "chance estimada de evoluir com sinais de alarme ou dengue grave",
+  "taxa_base": 0.05499,
+  "alvo": "evolucao com sinais de alarme ou dengue grave (CLASSI_FIN 11/12) x dengue sem sinais de alarme (CLASSI_FIN 10), entre casos provaveis de dengue notificados - todos os criterios",
+  "criado_em": "2026-10-09T05:27:31+00:00",
+  "sintetico": true,
+  "features": [
+    {
+      "nome": "febre",
+      "coef": 0.6491,
+      "tipo": "binaria",
+      "rotulo": "Febre",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "mialgia",
+      "coef": 0.48311,
+      "tipo": "binaria",
+      "rotulo": "Dor muscular",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "cefaleia",
+      "coef": 0.198499,
+      "tipo": "binaria",
+      "rotulo": "Dor de cabeça",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "exantema",
+      "coef": 0.720201,
+      "tipo": "binaria",
+      "rotulo": "Manchas na pele (exantema)",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "vomito",
+      "coef": 0.977776,
+      "tipo": "binaria",
+      "rotulo": "Vômito",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "nausea",
+      "coef": 0.779175,
+      "tipo": "binaria",
+      "rotulo": "Náusea",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "dor_costas",
+      "coef": 0.395449,
+      "tipo": "binaria",
+      "rotulo": "Dor nas costas",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "conjuntivite",
+      "coef": 0.414804,
+      "tipo": "binaria",
+      "rotulo": "Conjuntivite",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "artrite",
+      "coef": 0.446993,
+      "tipo": "binaria",
+      "rotulo": "Artrite",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "artralgia",
+      "coef": 0.416123,
+      "tipo": "binaria",
+      "rotulo": "Dor intensa nas articulações",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "petequias",
+      "coef": 1.186525,
+      "tipo": "binaria",
+      "rotulo": "Petéquias",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "dor_retro_orbital",
+      "coef": 0.393132,
+      "tipo": "binaria",
+      "rotulo": "Dor atrás dos olhos",
+      "grupo": "sintoma"
+    },
+    {
+      "nome": "diabetes",
+      "coef": 1.494587,
+      "tipo": "binaria",
+      "rotulo": "Diabetes",
+      "grupo": "fator"
+    },
+    {
+      "nome": "doenca_hematologica",
+      "coef": 1.757569,
+      "tipo": "binaria",
+      "rotulo": "Doença hematológica",
+      "grupo": "fator"
+    },
+    {
+      "nome": "hepatopatia",
+      "coef": 1.393586,
+      "tipo": "binaria",
+      "rotulo": "Hepatopatia",
+      "grupo": "fator"
+    },
+    {
+      "nome": "doenca_renal",
+      "coef": 1.49875,
+      "tipo": "binaria",
+      "rotulo": "Doença renal crônica",
+      "grupo": "fator"
+    },
+    {
+      "nome": "hipertensao",
+      "coef": 1.25987,
+      "tipo": "binaria",
+      "rotulo": "Hipertensão arterial",
+      "grupo": "fator"
+    },
+    {
+      "nome": "doenca_acido_peptica",
+      "coef": 1.023743,
+      "tipo": "binaria",
+      "rotulo": "Doença ácido-péptica",
+      "grupo": "fator"
+    },
+    {
+      "nome": "doenca_autoimune",
+      "coef": 1.209377,
+      "tipo": "binaria",
+      "rotulo": "Doença autoimune",
+      "grupo": "fator"
+    },
+    {
+      "nome": "gestante",
+      "coef": -0.049459,
+      "tipo": "binaria",
+      "rotulo": "Gestante",
+      "grupo": "fator"
+    },
+    {
+      "nome": "sexo_f",
+      "coef": -0.047705,
+      "tipo": "binaria",
+      "rotulo": "Sexo feminino"
+    },
+    {
+      "nome": "idade_anos",
+      "coef": 0.42441,
+      "tipo": "numerica",
+      "rotulo": "Idade (anos)",
+      "media": 35.8515,
+      "desvio": 17.8874
+    }
+  ],
+  "intercepto": -5.834284,
+  "idade_padrao_anos": 33.0,
+  "limiar": 0.0407,
+  "regularizacao_C": 1.0,
+  "metricas_teste": {
+    "limiar": 0.0407,
+    "acuracia": 0.678,
+    "precisao": 0.1285,
+    "sensibilidade": 0.7834,
+    "especificidade": 0.6715,
+    "f1": 0.2208,
+    "roc_auc": 0.8102,
+    "pr_auc": 0.3433,
+    "brier": 0.0457,
+    "matriz_confusao": {
+      "vn": 4311,
+      "fp": 2109,
+      "fn": 86,
+      "vp": 311
+    },
+    "roc_auc_ic95": [
+      0.7874,
+      0.8332
+    ],
+    "f1_ic95": [
+      0.2006,
+      0.2399
+    ]
+  },
+  "dados": {
+    "fonte": "SINAN - Notificacoes de dengue (dados abertos do Ministerio da Saude)",
+    "arquivo": "SINTETICO_t.csv",
+    "sha256": "63a66323077839ed4e260daba1b32e40552cbf789ef622a4207b6c2e09134be8",
+    "linhas_lidas": 60000,
+    "casos_usados": 45441,
+    "positivos": 2499,
+    "negativos": 42942,
+    "treino": 31808,
+    "validacao": 6816,
+    "teste": 6817,
+    "divisao": "temporal"
+  },
+  "avisos": [
+    "DADOS SINTETICOS: este modelo e so um teste do codigo e NAO tem valor clinico.",
+    "Modelo de APOIO a triagem (RN01): nao substitui a avaliacao do profissional de saude.",
+    "Treinado com casos notificados e investigados (com desfecho); pode nao representar todos os atendimentos em campo.",
+    "O rotulo vem da classificacao final do SINAN; quando o criterio nao e laboratorial, depende do juizo clinico-epidemiologico.",
+    "A base aberta do SINAN so traz casos provaveis de dengue (sem descartados): este modelo NAO diz se o paciente tem dengue, so a chance de evoluir com sinais de alarme/grave ENTRE casos de dengue.",
+    "O desfecho (sinais de alarme/grave) pode aparecer dias depois da notificacao; as variaveis usadas sao as conhecidas na visita (sintomas, idade, sexo, gestacao, comorbidades).",
+    "Nao foi validado em campo nem em aparelhos reais; use a pontuacao como indicativo, nunca como diagnostico."
+  ],
+  "conferencia_json_dif_max": 6.443e-07
+}

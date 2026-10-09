@@ -8,6 +8,7 @@ Write-Host '=== MEDGRAPH-AM: desligando ===' -ForegroundColor Cyan
 
 Write-Host 'Fechando o tunel...'
 Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process ngrok -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 Write-Host 'Parando API, PostgreSQL e Neo4j (os dados ficam guardados)...'
 docker compose stop

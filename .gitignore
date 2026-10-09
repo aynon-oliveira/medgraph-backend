@@ -4,3 +4,15 @@ __pycache__/
 .venv/
 .pytest_cache/
 uploads/
+
+# --- MEDGRAPH: não enviar ---
+.env
+*.csv
+DENGBR*
+*.bak-*
+*.ANTES-*.json
+__pycache__/
+.venv-ml/
+p24novo/
+tunel.txt
+.gitignore.add

@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEDGRAPH-AM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   MEDGRAPH-AM — Plataforma integrada
+   Triagem em campo (ACS) · Validação Médica · Vigilância (Gestor)
+   ========================================================= */
+
+:root{
+  --rio-950:#0B2B2E;
+  --rio-800:#123A3D;
+  --rio-700:#1E5F63;
+  --rio-600:#2A7377;
+  --mata-500:#3E8E63;
+  --mata-600:#2F7350;
+  --barro-500:#C97D4B;
+  --barro-600:#AD6539;
+  --alerta-500:#D6483C;
+  --alerta-700:#9C2E25;
+  --aviso-500:#E8A33D;
+  --aviso-700:#8A5D1C;
+  --areia-50:#F6F3EC;
+  --areia-100:#EDE7D8;
+  --areia-200:#E1D8C2;
+  --noite-900:#16231F;
+  --noite-700:#3B4A44;
+  --branco:#FFFFFF;
+
+  --fonte-titulo:'Zilla Slab', Georgia, serif;
+  --fonte-corpo:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --raio:6px;
+  --borda:1px solid var(--areia-200);
+  --fs-base:16px;
+  --fs-scale:1;
+  --foco-cor:#1657C9;
+}
+
+body.alto-contraste{
+  --rio-950:#000000; --rio-800:#000000; --rio-700:#000000; --rio-600:#000000;
+  --mata-500:#0A7A34; --mata-600:#065423;
+  --barro-500:#000000; --barro-600:#000000;
+  --alerta-500:#B10000; --alerta-700:#7A0000;
+  --aviso-500:#8A5D1C; --aviso-700:#5A3D00;
+  --areia-50:#FFFFFF; --areia-100:#FFFFFF; --areia-200:#000000;
+  --noite-900:#000000; --noite-700:#000000;
+  --foco-cor:#B10000;
+}
+
+*{ box-sizing:border-box; }
+html{ font-size:var(--fs-base); }
+body{
+  margin:0;
+  background:var(--areia-50);
+  color:var(--noite-900);
+  font-family:var(--fonte-corpo);
+  font-size:calc(1rem * var(--fs-scale));
+  line-height:1.5;
+}
+:focus-visible{ outline:3px solid var(--foco-cor); outline-offset:2px; }
+button, input, select, textarea{ font-family:inherit; }
+a{ color:inherit; }
+
+.pular-conteudo{
+  position:absolute; left:-999px; top:auto;
+  background:var(--branco); color:var(--noite-900);
+  padding:.75rem 1rem; border-radius:var(--raio); z-index:999;
+  border:2px solid var(--rio-700);
+}
+.pular-conteudo:focus{ left:1rem; top:1rem; }
+.regiao-viva{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.somente-leitor{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+[hidden]{ display:none !important; }
+
+/* ===================== TELA DE LOGIN ===================== */
+.tela-login{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:2rem 1.25rem;
+  background:var(--rio-950);
+}
+.login-cartao{
+  width:100%;
+  max-width:26rem;
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:2rem 1.75rem;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+.login-titulo{ font-family:var(--fonte-titulo); font-size:1.4rem; color:var(--rio-950); margin:0 0 .35rem; }
+.login-descricao{ font-size:.9rem; color:var(--noite-700); margin:0 0 1.4rem; }
+.campo-perfil{ border:1.5px solid var(--areia-200); border-radius:var(--raio); padding:.9rem 1rem 1rem; margin:0 0 1.3rem; }
+.campo-perfil legend{ font-weight:600; font-size:.85rem; padding:0 .3rem; }
+.opcao-perfil{ display:flex; align-items:center; gap:.55rem; font-size:.92rem; padding:.35rem 0; cursor:pointer; }
+.login-aviso{
+  font-size:.85rem; font-weight:600; color:var(--aviso-700);
+  background:#FCF3E3; border:1px solid var(--aviso-500); border-radius:var(--raio);
+  padding:.7rem .9rem; margin:0 0 1.1rem;
+}
+
+/* ===================== CABEÇALHO ===================== */
+.cabecalho{ background:var(--rio-950); color:var(--areia-50); border-bottom:4px solid var(--barro-500); }
+.cabecalho__barra{
+  max-width:1280px; margin:0 auto; padding:.85rem 1.25rem;
+  display:flex; align-items:center; gap:1.1rem; flex-wrap:wrap;
+}
+.marca{ display:flex; align-items:center; gap:.65rem; margin-right:auto; }
+.marca__texto{ display:flex; flex-direction:column; line-height:1.1; }
+.marca__nome{ font-family:var(--fonte-titulo); font-weight:700; font-size:1.35rem; letter-spacing:.01em; }
+.marca__legenda{ font-size:.78rem; color:var(--areia-200); font-weight:500; }
+
+.sessao-usuario{ display:inline-flex; align-items:center; gap:.6rem; font-size:.85rem; color:var(--areia-50); }
+.sessao-usuario__nome{ font-weight:700; }
+.sessao-usuario__perfil{ color:var(--areia-200); font-size:.78rem; }
+.btn-sair{
+  background:transparent; border:1px solid var(--rio-600); color:var(--areia-50);
+  border-radius:var(--raio); padding:.3rem .6rem; font-size:.78rem; font-weight:600; cursor:pointer;
+}
+.btn-sair:hover{ background:var(--rio-700); }
+
+.status-conexao{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.4rem .75rem; border-radius:999px; font-weight:600; font-size:.85rem;
+  background:var(--rio-800); border:1px solid var(--rio-600);
+}
+.status-conexao__ponto{ width:.6rem; height:.6rem; border-radius:50%; background:var(--mata-500); box-shadow:0 0 0 3px rgba(62,142,99,.25); }
+.status-conexao.offline .status-conexao__ponto{ background:var(--aviso-500); box-shadow:0 0 0 3px rgba(232,163,61,.25); }
+.status-conexao.offline{ color:var(--aviso-500); border-color:var(--aviso-700); }
+
+.btn-sync{
+  background:transparent; border:1px solid var(--rio-600); color:var(--areia-200);
+  border-radius:var(--raio); padding:.35rem .65rem; font-size:.76rem; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.btn-sync:hover{ background:var(--rio-700); color:var(--areia-50); }
+
+.controles-a11y{ display:flex; align-items:center; gap:.4rem; border-left:1px solid var(--rio-600); padding-left:1rem; }
+.controles-a11y button{
+  background:var(--rio-800); color:var(--areia-50); border:1px solid var(--rio-600);
+  border-radius:var(--raio); padding:.4rem .6rem; cursor:pointer; font-size:.85rem; font-weight:600;
+}
+.controles-a11y button:hover{ background:var(--rio-700); }
+.controles-a11y button[aria-pressed="true"]{ background:var(--mata-600); border-color:var(--mata-500); }
+
+/* ===================== LAYOUT GERAL ===================== */
+.envoltorio{ max-width:1280px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+.pagina-titulo{ margin:0 0 .35rem; font-family:var(--fonte-titulo); font-size:1.85rem; color:var(--rio-950); }
+.pagina-descricao{ margin:0 0 2rem; max-width:70ch; color:var(--noite-700); }
+
+.painel{
+  background:var(--branco); border:var(--borda); border-radius:var(--raio);
+  padding:1.25rem 1.35rem; margin-bottom:1.5rem;
+}
+.painel__titulo{
+  margin:0 0 .9rem; font-family:var(--fonte-titulo); font-size:1.12rem; color:var(--rio-950);
+  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+}
+.painel__acao{ font-size:.85rem; font-weight:600; color:var(--rio-700); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0; }
+.painel__rodape{ margin-top:1rem; font-size:.82rem; color:var(--noite-700); }
+
+.btn-primario{
+  background:var(--mata-500); color:var(--branco); border:none; border-radius:var(--raio);
+  padding:.75rem 1.4rem; font-weight:700; font-size:1rem; cursor:pointer;
+}
+.btn-primario:hover{ background:var(--mata-600); }
+.btn-primario:disabled{ background:var(--areia-200); color:var(--noite-700); cursor:not-allowed; }
+
+.btn-secundario{
+  background:var(--branco); border:1.5px solid var(--rio-700); color:var(--rio-700);
+  border-radius:var(--raio); padding:.55rem .95rem; font-weight:600; cursor:pointer; font-size:.9rem;
+}
+.btn-secundario:hover{ background:var(--rio-700); color:var(--branco); }
+
+.campo{ margin-bottom:1rem; }
+.campo:last-child{ margin-bottom:0; }
+.campo label{ display:block; font-weight:600; font-size:.9rem; margin-bottom:.3rem; }
+.campo input[type="text"], .campo input[type="number"], .campo input[type="date"],
+.campo select, .campo textarea{
+  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
+  background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit;
+}
+.campo input:focus, .campo select:focus, .campo textarea:focus{ background:var(--branco); }
+.campo-linha{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+@media (max-width:520px){ .campo-linha{ grid-template-columns:1fr; } }
+
+fieldset{ border:1.5px solid var(--areia-200); border-radius:var(--raio); padding:1rem 1.1rem; margin:0 0 1.2rem; }
+legend{ font-weight:700; padding:0 .4rem; font-size:.92rem; }
+.opcao-radio{ display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.6rem; font-size:.92rem; }
+.opcao-radio input{ margin-top:.3rem; }
+.opcao-radio label{ cursor:pointer; }
+
+.nivel-pilula{ display:inline-block; padding:.15rem .55rem; border-radius:999px; font-size:.76rem; font-weight:700; color:var(--branco); }
+.nivel-pilula.alto{ background:var(--alerta-500); }
+.nivel-pilula.medio{ background:var(--aviso-500); color:var(--noite-900); }
+.nivel-pilula.baixo{ background:var(--mata-500); }
+
+.rodape{ background:var(--rio-950); color:var(--areia-200); text-align:center; padding:1.2rem; font-size:.82rem; }
+
+/* ===================== VISÃO ACS ===================== */
+.layout{ display:grid; grid-template-columns:1.6fr 1fr; gap:2rem; align-items:start; }
+@media (max-width:880px){ .layout{ grid-template-columns:1fr; } }
+
+.trilha{ list-style:none; margin:0; padding:0; position:relative; }
+.etapa{ position:relative; padding:0 0 2.25rem 3.25rem; border-left:2px solid var(--areia-200); margin-left:1rem; }
+.etapa:last-child{ border-left-color:transparent; padding-bottom:0; }
+.etapa__marcador{
+  position:absolute; left:-1.05rem; top:0; width:2.1rem; height:2.1rem; border-radius:50%;
+  background:var(--rio-950); color:var(--areia-50); display:flex; align-items:center; justify-content:center;
+  font-family:var(--fonte-titulo); font-weight:700; font-size:1rem;
+  border:3px solid var(--areia-50); box-shadow:0 0 0 2px var(--areia-200);
+}
+.etapa__corpo{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1.25rem 1.4rem 1.4rem; }
+.etapa__titulo{ margin:0 0 .25rem; font-family:var(--fonte-titulo); font-size:1.15rem; color:var(--rio-950); }
+.etapa__ajuda{ margin:0 0 1rem; font-size:.88rem; color:var(--noite-700); }
+
+.btn-gps{
+  display:inline-flex; align-items:center; gap:.4rem; margin-top:.5rem;
+  background:var(--areia-100); border:1.5px solid var(--areia-200); color:var(--noite-900);
+  border-radius:var(--raio); padding:.5rem .8rem; font-weight:600; font-size:.88rem; cursor:pointer;
+}
+.btn-gps:hover{ background:var(--areia-200); }
+.gps-resultado{ margin-top:.5rem; font-size:.85rem; font-weight:600; color:var(--mata-600); }
+
+.gravador{
+  display:flex; align-items:center; gap:1rem; background:var(--areia-50);
+  border:1.5px dashed var(--areia-200); border-radius:var(--raio); padding:1rem; flex-wrap:wrap;
+}
+.btn-gravar{
+  display:inline-flex; align-items:center; gap:.55rem; background:var(--barro-500); color:var(--branco);
+  border:none; border-radius:999px; padding:.65rem 1.15rem; font-weight:700; cursor:pointer; font-size:.95rem;
+}
+.btn-gravar:hover{ background:var(--barro-600); }
+.btn-gravar[aria-pressed="true"]{ background:var(--alerta-500); }
+.btn-gravar__ponto{ width:.65rem; height:.65rem; border-radius:50%; background:var(--branco); }
+.gravador__status{ font-size:.88rem; color:var(--noite-700); flex:1; min-width:180px; }
+.onda{ display:flex; align-items:flex-end; gap:3px; height:28px; }
+.onda span{ width:4px; background:var(--rio-700); border-radius:2px; opacity:.35; height:6px; }
+.gravador.gravando .onda span{ animation:pulsar 1s ease-in-out infinite; opacity:1; }
+.onda span:nth-child(1){ animation-delay:.0s; } .onda span:nth-child(2){ animation-delay:.15s; }
+.onda span:nth-child(3){ animation-delay:.3s; } .onda span:nth-child(4){ animation-delay:.45s; }
+.onda span:nth-child(5){ animation-delay:.2s; }
+@keyframes pulsar{ 0%,100%{ height:6px; } 50%{ height:24px; } }
+@media (prefers-reduced-motion: reduce){ .onda span{ animation:none !important; } }
+
+.upload-foto{ border:1.5px dashed var(--areia-200); border-radius:var(--raio); padding:1.1rem; text-align:center; background:var(--areia-50); }
+.upload-foto__botoes{ display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin-top:.6rem; }
+.upload-foto__preview{ margin-top:.8rem; font-size:.85rem; font-weight:600; color:var(--mata-600); display:none; }
+.upload-foto__preview.ativo{ display:block; }
+
+.acao-inferencia{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.inferencia-nota{ font-size:.85rem; color:var(--noite-700); }
+
+.resultado-ia{ margin-top:1.1rem; border-radius:var(--raio); border:1.5px solid var(--areia-200); padding:1.1rem 1.2rem; display:none; }
+.resultado-ia.visivel{ display:block; }
+.resultado-ia.risco-baixo{ border-color:var(--mata-500); background:#F1F8F3; }
+.resultado-ia.risco-alto{ border-color:var(--alerta-500); background:#FBEEEC; }
+.resultado-ia__cabeca{ display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; margin-bottom:.6rem; }
+.resultado-ia__probabilidade{ font-family:var(--fonte-titulo); font-size:1.9rem; font-weight:700; }
+.risco-baixo .resultado-ia__probabilidade{ color:var(--mata-600); }
+.risco-alto .resultado-ia__probabilidade{ color:var(--alerta-700); }
+.resultado-ia__fontes{ font-size:.8rem; font-weight:600; color:var(--rio-700); margin:0 0 .5rem; }
+.selo-risco{ display:inline-block; padding:.3rem .7rem; border-radius:999px; font-weight:700; font-size:.8rem; }
+.risco-baixo .selo-risco{ background:var(--mata-500); color:var(--branco); }
+.risco-alto .selo-risco{ background:var(--alerta-500); color:var(--branco); }
+.resultado-ia__lista{ margin:.6rem 0 0; padding-left:1.2rem; font-size:.9rem; }
+.resultado-ia__aviso{ margin-top:.8rem; font-size:.82rem; color:var(--noite-700); border-top:1px solid rgba(0,0,0,.08); padding-top:.6rem; }
+.resultado-ia__aviso-vazio{
+  font-size:.85rem; font-weight:600; color:var(--aviso-700); background:#FCF3E3;
+  border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.7rem .9rem; margin-top:.8rem;
+}
+
+.contador{ background:var(--barro-500); color:var(--branco); border-radius:999px; padding:.15rem .6rem; font-size:.78rem; font-weight:700; font-family:var(--fonte-corpo); }
+.lista-pendentes{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.65rem; }
+.item-pendente{
+  border:1px solid var(--areia-200); border-left-width:4px; border-radius:var(--raio); padding:.65rem .8rem;
+  display:flex; justify-content:space-between; align-items:center; gap:.6rem; font-size:.87rem;
+}
+.item-pendente.prioritario{ border-left-color:var(--alerta-500); }
+.item-pendente.padrao{ border-left-color:var(--aviso-500); }
+.item-pendente.sincronizado{ border-left-color:var(--rio-600); }
+.item-pendente.validado{ border-left-color:var(--mata-500); opacity:.75; }
+.item-pendente__nome{ font-weight:700; }
+.item-pendente__meta{ color:var(--noite-700); font-size:.8rem; }
+.etiqueta-status{ font-size:.72rem; font-weight:700; padding:.2rem .5rem; border-radius:999px; white-space:nowrap; }
+.prioritario .etiqueta-status{ background:var(--alerta-500); color:var(--branco); }
+.padrao .etiqueta-status{ background:var(--aviso-500); color:var(--noite-900); }
+.sincronizado .etiqueta-status{ background:var(--rio-600); color:var(--branco); }
+.validado .etiqueta-status{ background:var(--mata-500); color:var(--branco); }
+
+/* ===================== VISÃO GESTOR ===================== */
+.filtros{
+  display:flex; gap:1rem; align-items:end; flex-wrap:wrap; background:var(--branco);
+  border:var(--borda); border-radius:var(--raio); padding:1rem 1.2rem; margin-bottom:1.5rem;
+}
+.filtro-campo label{ display:block; font-weight:600; font-size:.85rem; margin-bottom:.3rem; }
+.filtro-campo select{
+  padding:.5rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
+  background:var(--areia-50); min-width:180px; font-size:.9rem;
+}
+
+.indicadores{ display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin-bottom:1.75rem; }
+@media (max-width:920px){ .indicadores{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .indicadores{ grid-template-columns:1fr; } }
+.indicador{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1rem 1.1rem; border-top:4px solid var(--rio-700); }
+.indicador.destaque-alto{ border-top-color:var(--alerta-500); }
+.indicador.destaque-medio{ border-top-color:var(--aviso-500); }
+.indicador.destaque-ok{ border-top-color:var(--mata-500); }
+.indicador__valor{ font-family:var(--fonte-titulo); font-size:2rem; font-weight:700; color:var(--rio-950); line-height:1; }
+.indicador__rotulo{ font-size:.85rem; color:var(--noite-700); margin-top:.35rem; }
+
+.layout-vigilancia{ display:grid; grid-template-columns:1.7fr 1fr; gap:1.5rem; align-items:start; }
+@media (max-width:960px){ .layout-vigilancia{ grid-template-columns:1fr; } }
+
+.mapa-legenda{ display:flex; gap:1.2rem; flex-wrap:wrap; margin-top:.8rem; font-size:.82rem; color:var(--noite-700); }
+.mapa-legenda span{ display:inline-flex; align-items:center; gap:.4rem; }
+.mapa-legenda i{ width:.8rem; height:.8rem; border-radius:50%; display:inline-block; }
+.mapa-aviso{ font-size:.8rem; color:var(--noite-700); margin-top:.6rem; padding-top:.6rem; border-top:1px solid var(--areia-200); }
+
+.tabela-focos{ width:100%; border-collapse:collapse; font-size:.88rem; }
+.tabela-focos caption{ text-align:left; font-weight:600; margin-bottom:.5rem; color:var(--noite-700); font-size:.85rem; }
+.tabela-focos th, .tabela-focos td{ text-align:left; padding:.55rem .6rem; border-bottom:1px solid var(--areia-200); }
+.tabela-focos th{ background:var(--rio-950); color:var(--areia-50); font-size:.8rem; text-transform:uppercase; letter-spacing:.02em; }
+
+/* ===================== VISÃO MÉDICO ===================== */
+.layout-validacao{ display:grid; grid-template-columns:.9fr 1.4fr; gap:1.5rem; align-items:start; }
+@media (max-width:960px){ .layout-validacao{ grid-template-columns:1fr; } }
+
+.fila-casos{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.6rem; }
+.caso-item{
+  width:100%; text-align:left; background:var(--areia-50); border:1.5px solid var(--areia-200);
+  border-left-width:5px; border-radius:var(--raio); padding:.7rem .85rem; cursor:pointer; font-size:.88rem;
+}
+.caso-item.alto{ border-left-color:var(--alerta-500); }
+.caso-item.medio{ border-left-color:var(--aviso-500); }
+.caso-item[aria-current="true"]{ background:var(--areia-200); }
+.caso-item__nome{ font-weight:700; display:block; }
+.caso-item__meta{ color:var(--noite-700); font-size:.8rem; }
+
+.ficha-caso{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1.3rem 1.4rem; }
+.ficha-caso__grade{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem 1.5rem; margin-bottom:1.2rem; }
+@media (max-width:600px){ .ficha-caso__grade{ grid-template-columns:1fr; } }
+.ficha-dado dt{ font-size:.78rem; text-transform:uppercase; letter-spacing:.03em; color:var(--noite-700); font-weight:700; }
+.ficha-dado dd{ margin:.2rem 0 0; font-size:.95rem; }
+
+.bloco-ia{ border-radius:var(--raio); border:1.5px solid var(--alerta-500); background:#FBEEEC; padding:1rem 1.2rem; margin-bottom:1.2rem; }
+.bloco-ia.medio{ border-color:var(--aviso-500); background:#FCF3E3; }
+.bloco-ia__cabeca{ display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; }
+.bloco-ia__probabilidade{ font-family:var(--fonte-titulo); font-size:1.6rem; font-weight:700; color:var(--alerta-700); }
+.bloco-ia.medio .bloco-ia__probabilidade{ color:var(--aviso-700); }
+.bloco-ia__lista{ margin:.5rem 0 0; padding-left:1.2rem; font-size:.88rem; }
+
+.acoes-ficha{ display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
+.confirmacao-envio{ font-size:.85rem; font-weight:700; color:var(--mata-600); }
+.medico-vazio{ font-size:.92rem; color:var(--noite-700); padding:1rem 0; }
+/* ===================== ACRÉSCIMOS (passos 18 e 19) ===================== */
+.campo input[type="email"], .campo input[type="password"], .campo input[type="url"]{
+  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
+  background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit;
+}
+.login-servidor{ margin:1.1rem 0 0; font-size:.82rem; color:var(--noite-700); }
+.login-servidor summary{ cursor:pointer; font-weight:600; }
+.login-servidor__atual{ word-break:break-all; font-weight:600; color:var(--rio-700); }
+.item-pendente.rejeitado{ border-left-color:var(--alerta-700); background:#FBEEEC; }
+.rejeitado .etiqueta-status{ background:var(--alerta-700); color:var(--branco); }
+.item-pendente__erro{ display:block; color:var(--alerta-700); font-size:.78rem; margin-top:.15rem; }
+.nota-prototipo{
+  font-size:.8rem; font-weight:600; color:var(--aviso-700); background:#FCF3E3;
+  border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.55rem .8rem; margin:.6rem 0 0;
+}
+.msg-status{ font-size:.85rem; font-weight:600; margin:.7rem 0 0; min-height:1.2em; }
+.msg-status.erro{ color:var(--alerta-700); }
+.msg-status.ok{ color:var(--mata-600); }
+.resumo-sync{ font-size:.82rem; color:var(--noite-700); margin:.2rem 0 .8rem; }
+.btn-sync-claro{
+  background:var(--branco); border:1.5px solid var(--rio-700); color:var(--rio-700); border-radius:var(--raio);
+  padding:.4rem .8rem; font-weight:600; font-size:.85rem; cursor:pointer; margin-bottom:.8rem;
+}
+.btn-sync-claro:hover{ background:var(--rio-700); color:var(--branco); }
+.btn-sync-claro:disabled{ opacity:.55; cursor:not-allowed; }
+#mapaLeaflet{ height:380px; border-radius:10px; border:1px solid var(--areia-200); z-index:0; }
+.mapa-erro{ font-size:.88rem; color:var(--aviso-700); background:#FCF3E3; border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.7rem .9rem; }
+.mapa-legenda i.tracejado{ background:transparent; border:2px dashed var(--noite-700); }
+.cartao-vazio{ font-size:.9rem; color:var(--noite-700); padding:.6rem 0; }
+.audio-gravado{ display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.6rem; }
+.audio-gravado audio{ max-width:100%; }
+.upload-foto__preview img{ display:block; max-width:220px; max-height:180px; margin:0 auto .6rem; border-radius:var(--raio); border:1px solid var(--areia-200); }
+.upload-foto__preview{ font-weight:400; }
+.ficha-midia{ margin:1rem 0; }
+.ficha-midia > div{ margin:.4rem 0 .8rem; }
+.ficha-midia audio{ display:block; width:100%; max-width:420px; margin-top:.6rem; }
+.ficha-midia img{ display:block; max-width:100%; max-height:420px; margin-top:.6rem; border-radius:var(--raio); border:1px solid var(--areia-200); }
+.nota-midia{ font-size:.78rem; color:var(--noite-700); margin:.2rem 0 0; }
+.btn-desabilitado-aviso{ opacity:.6; cursor:not-allowed; }
+@media print{
+  .cabecalho, .filtros, .controles-a11y, .btn-sair, .rodape, .pular-conteudo, #btnAlternarVisaoMapa, .acao-imprimir{ display:none !important; }
+  body{ background:#fff; }
+  .layout-vigilancia{ grid-template-columns:1fr; }
+  #visaoTabela{ display:block !important; }
+  #visaoMapa{ display:none !important; }
+}
+
+
+/* ---- senha e usuarios ---- */
+dialog.caixa{ border:none; border-radius:12px; padding:1.3rem 1.4rem; max-width:min(720px,94vw); width:100%; box-shadow:0 12px 40px rgba(0,0,0,.35); color:var(--noite-900); background:var(--branco); }
+dialog.caixa::backdrop{ background:rgba(8,28,32,.55); }
+dialog.caixa h2{ margin:0 0 .4rem; font-family:var(--fonte-titulo); font-size:1.2rem; color:var(--rio-950); }
+dialog.caixa .campo input[type="password"], dialog.caixa .campo input[type="email"], dialog.caixa .campo input[type="search"]{
+  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio); background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit; }
+.caixa__acoes{ display:flex; gap:.6rem; justify-content:flex-end; flex-wrap:wrap; margin-top:1rem; }
+dialog#dlgAuditoria{ max-height:92vh; overflow:hidden; }
+dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
+#dlgAuditoria .aud-corpo{ display:flex; flex-direction:column; min-height:0; max-height:calc(92vh - 2.6rem); }
+#dlgAuditoria .caixa__acoes{ flex:0 0 auto; }
+.grade-checks{ display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.15rem .9rem; }
+.grade-checks label{ display:flex; align-items:center; gap:.55rem; min-height:44px; cursor:pointer; font-size:.95rem; }
+.grade-checks input{ width:1.2rem; height:1.2rem; flex:0 0 auto; }
+.grade-checks.alarme label{ color:#7a2a1f; }
+.status-modelo{ font-size:.82rem; margin:.2rem 0 .8rem; color:var(--noite-700); }
+.status-modelo.teste{ color:#7a2a1f; font-weight:700; }
+.bloco-transcricao{ margin:.6rem 0 0; padding:.7rem .9rem; border:1px dashed var(--areia-200); border-radius:var(--raio); background:var(--areia-50); }
+.bloco-transcricao h4{ margin:0 0 .3rem; font-size:.92rem; }
+.bloco-assistente{ margin:1rem 0; padding:.9rem 1rem; border:1px solid var(--areia-200); border-radius:var(--raio); background:#fff; }
+.bloco-assistente h3{ font-family:var(--fonte-titulo); font-size:1.02rem; color:var(--rio-950); margin:0 0 .5rem; }
+.assist-resultado{ margin:.6rem 0 0; padding:.7rem .9rem; border:1px dashed var(--areia-200); border-radius:var(--raio); background:var(--areia-50); white-space:pre-wrap; font-size:.92rem; line-height:1.5; }
+.assist-resultado .assist-selo{ display:block; font-size:.78rem; font-weight:700; color:var(--noite-700); margin-bottom:.3rem; }
+.linha-ciente{ display:flex; gap:.5rem; align-items:flex-start; font-size:.86rem; margin:.5rem 0; }
+.linha-ciente input{ width:1.2rem; height:1.2rem; flex:0 0 auto; margin-top:.1rem; }
+.msg-caixa{ font-size:.88rem; margin:.5rem 0 0; min-height:1.2em; }
+.msg-caixa.erro{ color:#a12a1f; font-weight:600; }
+.msg-caixa.ok{ color:var(--mata-600); font-weight:600; }
+.senha-gerada{ background:var(--areia-50); border:1.5px dashed var(--rio-700); border-radius:var(--raio); padding:.7rem .9rem; margin:.8rem 0; font-size:.92rem; }
+.senha-gerada code{ font-size:1.05rem; font-weight:700; user-select:all; }
+.tabela-usuarios-rolagem{ overflow-x:auto; max-height:46vh; overflow-y:auto; margin-top:.8rem; }
+.btn-mini{ background:none; border:1.5px solid var(--rio-700); color:var(--rio-700); border-radius:var(--raio); padding:.2rem .55rem; font-size:.78rem; font-weight:600; cursor:pointer; margin:.1rem .15rem .1rem 0; }
+.btn-mini:hover{ background:var(--rio-700); color:var(--branco); }
+.btn-mini--perigo{ border-color:#a12a1f; color:#a12a1f; }
+.btn-mini--perigo:hover{ background:#a12a1f; color:var(--branco); }
+.pilula-inativo{ color:#a12a1f; font-weight:700; }
+
+.barra-sintoma{ display:grid; grid-template-columns:minmax(7rem,12rem) 1fr 3rem; gap:.6rem; align-items:center; margin:.35rem 0; font-size:.88rem; }
+.barra-sintoma__trilho{ background:var(--areia-200); border-radius:999px; height:.7rem; overflow:hidden; }
+.barra-sintoma__preenche{ background:var(--rio-700); height:100%; border-radius:999px; }
+.barra-sintoma__alarme .barra-sintoma__preenche{ background:#a12a1f; }
+.tag-alarme{ color:#a12a1f; font-weight:700; font-size:.72rem; margin-left:.3rem; }
+.resumo-grafo{ font-size:.82rem; color:var(--noite-700); margin:.7rem 0 0; }
+</style>
+</head>
+<body>
+
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo principal</a>
+<div class="regiao-viva" role="status" aria-live="polite" id="regiao-viva"></div>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="telaLogin" class="tela-login">
+  <form class="login-cartao" id="formLogin" novalidate>
+    <div class="marca" style="margin-bottom:1.5rem;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <circle cx="17" cy="17" r="16" stroke="#C97D4B" stroke-width="2"/>
+        <path d="M8 20c3-6 6-9 9-9s6 3 9 9" stroke="#1E5F63" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="8" cy="20" r="1.8" fill="#3E8E63"/><circle cx="17" cy="11" r="1.8" fill="#3E8E63"/><circle cx="26" cy="20" r="1.8" fill="#3E8E63"/>
+      </svg>
+      <span class="marca__texto">
+        <span class="marca__nome" style="color:var(--rio-950);">MEDGRAPH-AM</span>
+        <span class="marca__legenda" style="color:var(--noite-700);">Acesso à plataforma</span>
+      </span>
+    </div>
+
+    <h1 class="login-titulo">Entrar na plataforma</h1>
+    <p class="login-descricao">Use o e-mail e a senha cadastrados pelo gestor. Seu perfil (ACS, Médico ou Gestor) vem do cadastro.</p>
+
+    <div class="campo">
+      <label for="loginEmail">E-mail</label>
+      <input type="email" id="loginEmail" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="campo">
+      <label for="loginSenha">Senha</label>
+      <input type="password" id="loginSenha" autocomplete="current-password">
+    </div>
+
+    <p class="login-aviso" id="loginAviso" role="alert" hidden></p>
+    <button type="submit" class="btn-primario" id="btnEntrar" style="width:100%;">Entrar</button>
+
+    <details class="login-servidor" id="detalhesEsqueci">
+      <summary>Esqueci minha senha</summary>
+      <p style="margin:.6rem 0 0;">Peça ao gestor da sua unidade para redefinir a sua senha. Ele gera uma senha temporária; entre com ela e troque em <strong>Minha senha</strong>. Se você é o gestor e esqueceu a sua, a redefinição é feita pelo responsável técnico do servidor.</p>
+    </details>
+    <details class="login-servidor" id="detalhesServidor">
+      <summary>Servidor: <span class="login-servidor__atual" id="servidorAtual">—</span></summary>
+      <div class="campo" style="margin-top:.7rem;">
+        <label for="servidorUrl">Endereço da API (https://…)</label>
+        <input type="url" id="servidorUrl" placeholder="https://seu-endereco.ngrok-free.app" autocomplete="off" spellcheck="false">
+      </div>
+      <button type="button" class="btn-secundario" id="btnSalvarServidor">Usar este servidor</button>
+      <p style="margin:.6rem 0 0;">Só informe um endereço que você conhece: ele receberá seu e-mail e sua senha.</p>
+    </details>
+  </form>
+</div>
+
+<!-- ===================== APLICAÇÃO ===================== -->
+<div id="appPrincipal" hidden>
+
+<header class="cabecalho">
+  <div class="cabecalho__barra">
+    <div class="marca">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <circle cx="17" cy="17" r="16" stroke="#C97D4B" stroke-width="2"/>
+        <path d="M8 20c3-6 6-9 9-9s6 3 9 9" stroke="#F6F3EC" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="8" cy="20" r="1.8" fill="#3E8E63"/><circle cx="17" cy="11" r="1.8" fill="#3E8E63"/><circle cx="26" cy="20" r="1.8" fill="#3E8E63"/>
+        <circle cx="12.5" cy="15" r="1.4" fill="#F6F3EC"/><circle cx="21.5" cy="15" r="1.4" fill="#F6F3EC"/>
+      </svg>
+      <span class="marca__texto">
+        <span class="marca__nome">MEDGRAPH-AM</span>
+        <span class="marca__legenda" id="marcaLegenda">Triagem em campo</span>
+      </span>
+    </div>
+
+    <span class="sessao-usuario">
+      <span><span class="sessao-usuario__nome" id="sessaoNome">—</span><br><span class="sessao-usuario__perfil" id="sessaoPerfil">ACS</span></span>
+      <button type="button" class="btn-sair" id="btnUsuarios" hidden>Usuários</button>
+      <button type="button" class="btn-sair" id="btnFocos" hidden>Focos do vetor</button>
+      <button type="button" class="btn-sair" id="btnAuditoria" hidden>Auditoria</button>
+      <button type="button" class="btn-sair" id="btnMinhaSenha">Minha senha</button>
+      <button type="button" class="btn-sair" id="btnSair">Sair</button>
+    </span>
+
+    <span class="status-conexao" id="statusConexao">
+      <span class="status-conexao__ponto"></span>
+      <span id="statusConexaoTexto">Verificando conexão…</span>
+    </span>
+    <button type="button" class="btn-sync" id="btnSimularConexao" aria-pressed="false">Simular perda de conexão (demonstração)</button>
+
+    <div class="controles-a11y" role="group" aria-label="Controles de acessibilidade">
+      <button type="button" id="btnDiminuirFonte" aria-label="Diminuir tamanho da fonte">A−</button>
+      <button type="button" id="btnAumentarFonte" aria-label="Aumentar tamanho da fonte">A+</button>
+      <button type="button" id="btnContraste" aria-pressed="false" aria-label="Alternar modo de alto contraste">Alto contraste</button>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo-principal" class="envoltorio">
+
+  <!-- ===================== VISÃO 1 — ACS ===================== -->
+  <div id="visaoACS" hidden>
+    <h1 class="pagina-titulo" id="tituloACS" tabindex="-1">Registro de atendimento em campo</h1>
+    <p class="pagina-descricao">Preencha os dados da visita mesmo sem conexão. O registro é salvo neste aparelho e enviado ao servidor automaticamente quando a rede voltar.</p>
+
+    <div class="layout">
+      <section aria-labelledby="titulo-formulario">
+        <h2 id="titulo-formulario" style="position:absolute;left:-9999px;">Formulário de triagem</h2>
+
+        <form id="formTriagem" novalidate>
+          <ol class="trilha">
+
+            <li class="etapa">
+              <span class="etapa__marcador" aria-hidden="true">1</span>
+              <div class="etapa__corpo">
+                <h3 class="etapa__titulo">Identificação do paciente</h3>
+                <p class="etapa__ajuda">Dados básicos e localização da visita domiciliar.</p>
+
+                <div class="campo-linha">
+                  <div class="campo"><label for="nomePaciente">Nome do paciente</label><input type="text" id="nomePaciente" autocomplete="off"></div>
+                  <div class="campo"><label for="dataNascimento">Data de nascimento</label><input type="date" id="dataNascimento"></div>
+                  <div class="campo"><label for="sexoPaciente">Sexo (opcional)</label><select id="sexoPaciente"><option value="">Não informado</option><option value="F">Feminino</option><option value="M">Masculino</option><option value="O">Outro</option></select></div>
+                </div>
+                <div class="campo-linha">
+                  <div class="campo"><label for="bairro">Bairro / Localidade</label><input type="text" id="bairro" autocomplete="off"></div>
+                  <div class="campo"><label for="municipio">Município</label><input type="text" id="municipio" value="Manaus" autocomplete="off"></div>
+                </div>
+                <div class="campo">
+                  <label id="labelGps">Coordenadas GPS da visita</label>
+                  <button type="button" class="btn-gps" id="btnCapturarGps" aria-describedby="gpsResultado">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="2"/></svg>
+                    Capturar localização atual
+                  </button>
+                  <p class="gps-resultado" id="gpsResultado" role="status">Nenhuma coordenada capturada ainda. A localização é obrigatória.</p>
+                </div>
+              </div>
+            </li>
+
+            <li class="etapa">
+              <span class="etapa__marcador" aria-hidden="true">2</span>
+              <div class="etapa__corpo">
+                <h3 class="etapa__titulo">Relato de sintomas por áudio</h3>
+                <p class="etapa__ajuda">Grave o relato do paciente (até 3 minutos). O áudio fica salvo neste aparelho e vai ao médico junto com o atendimento. O médico pode pedir a transcrição automática no servidor. Aqui, <strong>marque os sintomas</strong> da lista abaixo; se preferir, digite um resumo do relato e o sistema sugere as marcações (confira sempre).</p>
+
+                <div class="gravador" id="gravador">
+                  <button type="button" class="btn-gravar" id="btnGravar" aria-pressed="false">
+                    <span class="btn-gravar__ponto" aria-hidden="true"></span>
+                    <span id="textoBtnGravar">Iniciar gravação</span>
+                  </button>
+                  <div class="onda" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+                  <p class="gravador__status" id="statusGravacao" role="status">Nenhum áudio gravado.</p>
+                </div>
+                <div class="audio-gravado">
+                  <audio id="previewAudio" controls hidden aria-label="Áudio gravado"></audio>
+                  <button type="button" class="btn-secundario" id="btnDescartarAudio" hidden>Descartar áudio</button>
+                </div>
+
+                <div class="campo" style="margin-top:1rem;">
+                  <label for="relatoTexto">Relato do paciente (resumo digitado)</label>
+                  <textarea id="relatoTexto" rows="3" placeholder="Ex.: Paciente apresenta febre alta há três dias, dor retro-orbitária e manchas na pele."></textarea>
+                </div>
+
+                <fieldset style="margin-top:1rem;">
+                  <legend>Sintomas observados</legend>
+                  <div class="grade-checks" id="gradeSintomas"></div>
+                </fieldset>
+                <fieldset id="campoFatores" hidden>
+                  <legend>Condições de risco (se houver)</legend>
+                  <div class="grade-checks" id="gradeFatores"></div>
+                </fieldset>
+                <fieldset>
+                  <legend>Sinais de alarme (qualquer um classifica como alto risco)</legend>
+                  <div class="grade-checks alarme" id="gradeAlarme"></div>
+                </fieldset>
+              </div>
+            </li>
+
+            <li class="etapa">
+              <span class="etapa__marcador" aria-hidden="true">3</span>
+              <div class="etapa__corpo">
+                <h3 class="etapa__titulo">Foto do exantema cutâneo</h3>
+                <p class="etapa__ajuda">Tire uma foto da manifestação na pele ou escolha uma da galeria, se houver. A foto é reduzida e segue ao médico; ela ainda não é analisada pelo sistema.</p>
+                <div class="upload-foto">
+                  <p style="margin:0 0 .3rem;font-size:.9rem;" id="statusFoto" role="status">Nenhuma imagem selecionada</p>
+                  <div class="upload-foto__botoes">
+                    <button type="button" class="btn-secundario" id="btnTirarFoto">Usar câmera</button>
+                    <button type="button" class="btn-secundario" id="btnAnexarFoto">Anexar da galeria</button>
+                  </div>
+                  <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none;">
+                  <div class="upload-foto__preview" id="previewFoto"><img id="miniaturaFoto" alt="Miniatura da foto selecionada" hidden><button type="button" class="btn-secundario" id="btnRemoverFoto" hidden>Remover foto</button></div>
+                </div>
+              </div>
+            </li>
+
+            <li class="etapa">
+              <span class="etapa__marcador" aria-hidden="true">4</span>
+              <div class="etapa__corpo">
+                <h3 class="etapa__titulo">Triagem de risco</h3>
+                <p class="etapa__ajuda">Estimativa de risco a partir dos sintomas marcados, para apoiar a triagem.</p>
+                <p class="status-modelo" id="statusModelo" role="status">Verificando o modelo de risco…</p>
+
+                <div class="acao-inferencia">
+                  <button type="button" class="btn-primario" id="btnExecutarIA">Executar triagem</button>
+                  <span class="inferencia-nota" id="notaInferencia">Funciona mesmo sem conexão.</span>
+                </div>
+
+                <div class="resultado-ia" id="resultadoIA" aria-live="polite">
+                  <div class="resultado-ia__cabeca">
+                    <div>
+                      <div class="resultado-ia__probabilidade" id="probabilidadeValor">—</div>
+                      <div style="font-size:.85rem;color:var(--noite-700);" id="rotuloPontuacao">pontuação</div>
+                    </div>
+                    <span class="selo-risco" id="seloRisco">—</span>
+                  </div>
+                  <p class="resultado-ia__fontes" id="resultadoFontes"></p>
+                  <ul class="resultado-ia__lista" id="listaSinais"></ul>
+                  <p class="nota-prototipo" id="notaPrototipo"></p>
+                  <p class="resultado-ia__aviso">Este resultado é apenas um apoio à triagem. A confirmação diagnóstica é sempre do profissional de saúde habilitado.</p>
+                </div>
+                <p class="resultado-ia__aviso-vazio" id="avisoVazio" hidden>Marque ao menos um sintoma (ou digite o relato) no passo 2 antes de executar a triagem.</p>
+              </div>
+            </li>
+
+            <li class="etapa">
+              <span class="etapa__marcador" aria-hidden="true">5</span>
+              <div class="etapa__corpo">
+                <h3 class="etapa__titulo">Salvar atendimento</h3>
+                <p class="etapa__ajuda">O registro é salvo neste aparelho e entra na fila de envio.</p>
+                <button type="submit" class="btn-primario" id="btnSalvar">Salvar atendimento neste aparelho</button>
+                <p class="msg-status" id="msgSalvar" role="status"></p>
+              </div>
+            </li>
+
+          </ol>
+        </form>
+      </section>
+
+      <aside aria-label="Painéis de apoio">
+        <div class="painel">
+          <h2 class="painel__titulo">Fila de sincronização<span class="contador" id="contadorPendentes">0</span></h2>
+          <p class="resumo-sync" id="resumoSync" role="status"></p>
+          <button type="button" class="btn-sync-claro" id="btnSincronizarAgora">Enviar agora</button>
+          <ul class="lista-pendentes" id="listaPendentes"></ul>
+          <p class="painel__rodape">Atendimentos com sinais de alarme são enviados primeiro. Reenviar o mesmo registro não duplica nada.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+
+  <!-- ===================== VISÃO 2 — GESTOR ===================== -->
+  <div id="visaoGestor" hidden>
+    <h1 class="pagina-titulo" id="tituloGestor" tabindex="-1">Painel de Vigilância Epidemiológica</h1>
+    <p class="pagina-descricao">Atendimentos registrados pelos agentes, focos do vetor e tendência por localidade. Os dados vêm do servidor; as coordenadas são aproximadas para proteger o paciente.</p>
+
+    <form class="filtros" aria-label="Filtros do painel" id="formFiltros">
+      <div class="filtro-campo">
+        <label for="filtroMunicipio">Município</label>
+        <select id="filtroMunicipio"><option value="">Todos</option></select>
+      </div>
+      <div class="filtro-campo">
+        <label for="filtroPeriodo">Período</label>
+        <select id="filtroPeriodo"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select>
+      </div>
+      <button type="submit" class="btn-primario" id="btnAplicarFiltro">Atualizar</button>
+    </form>
+    <p class="msg-status" id="msgGestor" role="status"></p>
+
+    <div class="indicadores">
+      <div class="indicador destaque-alto"><div class="indicador__valor" id="indicadorAltoRisco">—</div><div class="indicador__rotulo">Atendimentos de alto risco</div></div>
+      <div class="indicador destaque-medio"><div class="indicador__valor" id="indicadorTotal">—</div><div class="indicador__rotulo">Atendimentos no período</div></div>
+      <div class="indicador destaque-ok"><div class="indicador__valor" id="indicadorCrescimento">—</div><div class="indicador__rotulo">Localidades em crescimento</div></div>
+      <div class="indicador"><div class="indicador__valor" id="indicadorFocos">—</div><div class="indicador__rotulo">Focos de <em>Aedes aegypti</em> registrados</div></div>
+    </div>
+
+    <div class="painel" id="painelResumoIA" hidden>
+      <h2 class="painel__titulo">Resumo do período com IA <span style="font-size:.78rem;font-weight:400;">(Gemini, rascunho de apoio)</span></h2>
+      <button type="button" class="btn-secundario" id="btnResumirPainel">Gerar resumo do período selecionado</button>
+      <div class="assist-resultado" id="textoPainelIA" hidden></div>
+      <p class="msg-status" id="msgPainelIA" role="status"></p>
+      <p class="nota-midia">Vão para o Google (Gemini) apenas números agregados do período (totais, localidades, sintomas). Nenhum dado de paciente. Cada uso fica na auditoria.</p>
+    </div>
+
+    <div class="painel" id="painelSintomas">
+      <h2 class="painel__titulo">Sintomas mais frequentes <span style="font-size:.78rem;font-weight:400;">(pacientes distintos, do grafo)</span></h2>
+      <div id="listaSintomas" aria-live="polite"><p class="msg-status">Carregando…</p></div>
+      <p class="resumo-grafo" id="resumoGrafo"></p>
+    </div>
+
+    <div class="layout-vigilancia">
+      <div class="painel">
+        <div class="painel__cabeca" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
+          <h2 class="painel__titulo" style="margin:0;">Mapa de risco por localidade</h2>
+          <button type="button" class="painel__acao" id="btnAlternarVisaoMapa" aria-pressed="false">Ver como tabela</button>
+        </div>
+
+        <div id="visaoMapa">
+          <div id="mapaLeaflet" role="region" aria-label="Mapa de risco de Dengue por localidade. Há uma versão em tabela pelo botão Ver como tabela."></div>
+          <div class="mapa-legenda">
+            <span><i style="background:#D6483C"></i> 30% ou mais dos atendimentos com alto risco</span>
+            <span><i style="background:#E8A33D"></i> 10% a 30%</span>
+            <span><i style="background:#3E8E63"></i> menos de 10%</span>
+            <span><i class="tracejado"></i> Vizinha de área em crescimento</span>
+          </div>
+          <p class="mapa-aviso">O tamanho do círculo é o número de atendimentos. A posição é o centro dos atendimentos da localidade.</p>
+        </div>
+
+        <div id="visaoTabela" style="display:none;">
+          <table class="tabela-focos">
+            <caption>Dados por localidade</caption>
+            <thead><tr><th scope="col">Localidade</th><th scope="col">Atend.</th><th scope="col">Alto risco</th><th scope="col">Focos</th><th scope="col">Tendência</th><th scope="col">Previsão (próx. semana)</th><th scope="col">Expansão</th></tr></thead>
+            <tbody id="corpoTabelaLocalidades"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="painel">
+          <h2 class="painel__titulo">Localidades prioritárias</h2>
+          <table class="tabela-focos" style="margin-top:.8rem;">
+            <caption class="somente-leitor">Localidades ordenadas por atendimentos de alto risco</caption>
+            <thead><tr><th scope="col">Localidade</th><th scope="col">Alto risco</th></tr></thead>
+            <tbody id="corpoTabelaPrioridades"></tbody>
+          </table>
+          <p class="painel__rodape" id="avisoProjecao"></p>
+        </div>
+
+        <div class="painel acao-imprimir">
+          <h2 class="painel__titulo">Ações de vigilância</h2>
+          <p style="font-size:.88rem;color:var(--noite-700);margin-top:0;">Gerar o relatório da tela para direcionar as equipes de combate ao vetor (use “Salvar como PDF” na impressão).</p>
+          <button type="button" class="btn-secundario" id="btnExportarRelatorio">Imprimir / salvar PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== VISÃO 3 — MÉDICO ===================== -->
+  <div id="visaoMedico" hidden>
+    <h1 class="pagina-titulo" id="tituloMedico" tabindex="-1">Validação Médica de Atendimentos</h1>
+    <p class="pagina-descricao">Revise a triagem do protótipo, ouça o áudio e veja a foto quando houver, e registre a confirmação ou alteração do diagnóstico e o encaminhamento definitivo.</p>
+
+    <div class="layout-validacao">
+      <div class="painel" style="margin-bottom:0;">
+        <h2 class="painel__titulo" id="tituloFila" style="display:block;">Atendimentos aguardando parecer</h2>
+        <p style="font-size:.82rem;color:var(--noite-700);margin-top:.2rem;" id="filaMedicoContagem" role="status"></p>
+        <button type="button" class="btn-sync-claro" id="btnAtualizarFila">Atualizar fila</button>
+        <ul class="fila-casos" role="list" aria-labelledby="tituloFila" style="margin-top:.8rem;" id="filaMedicoLista"></ul>
+      </div>
+
+      <div class="ficha-caso" aria-live="polite">
+        <p class="medico-vazio" id="medicoVazio" hidden>Nenhum atendimento pendente de validação no momento.</p>
+
+        <div id="fichaConteudo">
+          <h2 class="painel__titulo" id="tituloFicha" style="margin-bottom:1rem;display:block;">Ficha do atendimento</h2>
+          <dl class="ficha-caso__grade">
+            <div class="ficha-dado"><dt>Paciente</dt><dd id="fichaNome">—</dd></div>
+            <div class="ficha-dado"><dt>Localidade</dt><dd id="fichaLocal">—</dd></div>
+            <div class="ficha-dado"><dt>Data do atendimento</dt><dd id="fichaData">—</dd></div>
+            <div class="ficha-dado"><dt>Agente (código)</dt><dd id="fichaAgente">—</dd></div>
+          </dl>
+
+          <h3 style="font-family:var(--fonte-titulo);font-size:1.02rem;color:var(--rio-950);margin-bottom:.4rem;">Relato (texto digitado pelo agente)</h3>
+          <p id="fichaRelato" style="font-size:.92rem;background:var(--areia-50);border:1px solid var(--areia-200);border-radius:var(--raio);padding:.8rem 1rem;">—</p>
+
+          <div class="ficha-midia" id="fichaMidia" hidden>
+            <h3 style="font-family:var(--fonte-titulo);font-size:1.02rem;color:var(--rio-950);margin-bottom:.4rem;">Áudio e foto do atendimento</h3>
+            <div id="fichaMidiaAudio" hidden>
+              <button type="button" class="btn-secundario" id="btnCarregarAudio">Carregar áudio do relato</button>
+              <audio id="playerAudio" controls hidden aria-label="Áudio do relato do paciente"></audio>
+              <div style="margin-top:.5rem;">
+                <button type="button" class="btn-secundario" id="btnTranscrever">Transcrever áudio (rascunho automático)</button>
+              </div>
+              <div class="bloco-transcricao" id="blocoTranscricao" hidden>
+                <h4>Transcrição automática (rascunho)</h4>
+                <p id="textoTranscricao" style="margin:0 0 .3rem;"></p>
+                <p class="nota-midia">Gerada no servidor (Whisper). Pode conter erros de sotaque, ruído ou termos regionais: confira ouvindo o áudio. Não altera o relato nem o risco calculado.</p>
+              </div>
+              <p class="msg-status" id="msgTranscricao" role="status"></p>
+            </div>
+            <div id="fichaMidiaFoto" hidden>
+              <button type="button" class="btn-secundario" id="btnCarregarFoto">Carregar foto do exantema</button>
+              <img id="imagemFicha" alt="Foto do exantema enviada pelo agente" hidden>
+              <div id="blocoFotoIA" hidden>
+                <label class="linha-ciente"><input type="checkbox" id="cienteFotoIA"> <span>Estou ciente de que esta foto será enviada ao Google (Gemini) para uma descrição visual. Só envie se a foto não mostrar o rosto do paciente.</span></label>
+                <button type="button" class="btn-secundario" id="btnDescreverFoto" disabled>Descrever a foto com IA</button>
+                <div class="assist-resultado" id="textoFotoIA" hidden></div>
+                <p class="msg-status" id="msgFotoIA" role="status"></p>
+              </div>
+            </div>
+            <p class="msg-status" id="msgMidiaFicha" role="status"></p>
+            <p class="nota-midia">Dado sensível: cada abertura de áudio ou foto fica registrada na auditoria de acessos.</p>
+          </div>
+
+          <div class="bloco-ia" id="blocoIA">
+            <div class="bloco-ia__cabeca">
+              <div>
+                <div class="bloco-ia__probabilidade" id="fichaProbabilidade">—</div>
+                <div style="font-size:.82rem;color:var(--noite-700);" id="fichaLegendaIA">—</div>
+              </div>
+              <span class="nivel-pilula alto" id="fichaSelo">—</span>
+            </div>
+            <ul class="bloco-ia__lista" id="fichaSinais"></ul>
+          </div>
+
+          <div class="bloco-assistente" id="blocoAssistente" hidden>
+            <h3>Assistente de IA (Gemini) — rascunho de apoio</h3>
+            <button type="button" class="btn-secundario" id="btnResumirFicha">Resumir esta ficha com IA</button>
+            <div class="assist-resultado" id="textoResumoIA" hidden></div>
+            <p class="msg-status" id="msgResumoIA" role="status"></p>
+            <p class="nota-midia">Vão para o Google (Gemini) só idade, sexo, sintomas, sinais de alarme e o relato, sem nome, endereço, telefone ou documento. Não é diagnóstico e não altera o nível de risco. Cada uso fica na auditoria.</p>
+          </div>
+
+          <form id="formValidacao">
+            <fieldset>
+              <legend>Parecer do profissional</legend>
+              <div class="opcao-radio"><input type="radio" name="parecer" id="parecerConfirma" value="confirma" checked><label for="parecerConfirma">Confirmar o indicativo de risco</label></div>
+              <div class="opcao-radio"><input type="radio" name="parecer" id="parecerAltera" value="altera"><label for="parecerAltera">Discordar: registrar avaliação diferente do indicativo</label></div>
+            </fieldset>
+
+            <div class="campo" id="campoNivelCorrigido" hidden>
+              <label for="nivelCorrigido">Classificação de risco corrigida (opcional)</label>
+              <select id="nivelCorrigido">
+                <option value="">Manter a classificação atual</option>
+                <option value="BAIXO">Baixo</option>
+                <option value="MODERADO">Moderado</option>
+                <option value="ALTO">Alto</option>
+              </select>
+            </div>
+
+            <div class="campo">
+              <label for="observacaoMedica">Observações clínicas (mínimo de 5 caracteres)</label>
+              <textarea id="observacaoMedica" rows="3" placeholder="Ex.: Confirmado quadro compatível com Dengue. Encaminhado para unidade de referência."></textarea>
+            </div>
+
+            <div class="campo">
+              <label for="encaminhamento">Encaminhamento</label>
+              <select id="encaminhamento">
+                <option>Monitoramento domiciliar</option>
+                <option>Encaminhamento hospitalar prioritário</option>
+                <option>Retorno em 48 horas</option>
+                <option>Encaminhar para especialista</option>
+              </select>
+            </div>
+
+            <div class="acoes-ficha">
+              <button type="submit" class="btn-primario">Registrar parecer e validar atendimento</button>
+              <span class="confirmacao-envio" id="confirmacaoEnvio" role="status"></span>
+            </div>
+            <p class="resultado-ia__aviso">Indicativos de triagem são apoio à decisão; o parecer final é sempre do profissional habilitado.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="rodape">
+  MEDGRAPH-AM · Plataforma de triagem e vigilância epidemiológica da Dengue no Amazonas.
+</footer>
+
+</div><!-- fim #appPrincipal -->
+
+
+<dialog class="caixa" id="dlgSenha" aria-labelledby="dlgSenhaTitulo">
+  <form id="formSenha" novalidate>
+    <h2 id="dlgSenhaTitulo">Trocar minha senha</h2>
+    <p style="margin:0 0 .9rem;font-size:.9rem;">Use pelo menos 8 caracteres, com letras e números. Depois da troca você entra de novo com a senha nova.</p>
+    <div class="campo"><label for="senhaAtual">Senha atual</label><input type="password" id="senhaAtual" autocomplete="current-password"></div>
+    <div class="campo"><label for="senhaNova">Senha nova</label><input type="password" id="senhaNova" autocomplete="new-password"></div>
+    <div class="campo"><label for="senhaNova2">Repita a senha nova</label><input type="password" id="senhaNova2" autocomplete="new-password"></div>
+    <p class="msg-caixa" id="msgSenha" role="alert"></p>
+    <div class="caixa__acoes">
+      <button type="button" class="btn-secundario" id="btnCancelarSenha">Cancelar</button>
+      <button type="submit" class="btn-primario" id="btnSalvarSenha">Trocar senha</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="caixa" id="dlgUsuarios" aria-labelledby="dlgUsuariosTitulo">
+  <h2 id="dlgUsuariosTitulo">Usuários do sistema</h2>
+  <p style="margin:0 0 .6rem;font-size:.88rem;">Só o gestor cadastra usuários e redefine senhas. A senha temporária aparece uma única vez: entregue por um canal seguro.</p>
+  <div class="campo-linha">
+    <div class="campo"><label for="buscaUsuario">Buscar por nome ou e-mail</label><input type="search" id="buscaUsuario" autocomplete="off"></div>
+    <div class="campo" style="align-self:end;"><button type="button" class="btn-secundario" id="btnNovoUsuario">+ Cadastrar usuário</button></div>
+  </div>
+  <div id="boxSenhaGerada" class="senha-gerada" hidden></div>
+  <form id="formNovoUsuario" hidden novalidate style="border:1.5px solid var(--areia-200);border-radius:var(--raio);padding:.9rem 1rem;margin-top:.6rem;">
+    <div class="campo-linha">
+      <div class="campo"><label for="novoNome">Nome completo</label><input type="text" id="novoNome" autocomplete="off"></div>
+      <div class="campo"><label for="novoEmail">E-mail (será o login)</label><input type="email" id="novoEmail" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+    </div>
+    <div class="campo-linha">
+      <div class="campo"><label for="novoPerfil">Perfil</label>
+        <select id="novoPerfil"><option value="ACS">ACS (agente de saúde)</option><option value="MEDICO">Médico</option><option value="GESTOR">Gestor</option></select></div>
+      <div class="campo"><label for="novoExtra" id="rotuloExtra">Microárea</label><input type="text" id="novoExtra" autocomplete="off"></div>
+    </div>
+    <div class="campo"><label for="novaSenha">Senha inicial (mín. 8, com letras e números)</label>
+      <div style="display:flex;gap:.5rem;"><input type="text" id="novaSenha" autocomplete="off" spellcheck="false" style="flex:1;padding:.6rem .7rem;border:1.5px solid var(--areia-200);border-radius:var(--raio);background:var(--areia-50);font-size:.95rem;"><button type="button" class="btn-secundario" id="btnGerarSenha">Gerar</button></div></div>
+    <p class="msg-caixa" id="msgNovoUsuario" role="alert"></p>
+    <div class="caixa__acoes"><button type="button" class="btn-secundario" id="btnCancelarNovo">Cancelar</button><button type="submit" class="btn-primario" id="btnSalvarNovo">Cadastrar</button></div>
+  </form>
+  <p class="msg-caixa" id="msgUsuarios" role="status"></p>
+  <div class="tabela-usuarios-rolagem">
+    <table class="tabela-focos"><caption>Usuários cadastrados</caption>
+      <thead><tr><th>Nome / e-mail</th><th>Perfil</th><th>Situação</th><th>Ações</th></tr></thead>
+      <tbody id="corpoUsuarios"></tbody></table>
+  </div>
+  <div class="caixa__acoes"><button type="button" class="btn-primario" id="btnFecharUsuarios">Fechar</button></div>
+</dialog>
+
+
+<dialog class="caixa" id="dlgFoco" aria-labelledby="dlgFocoTitulo">
+  <form id="formFoco" novalidate>
+    <h2 id="dlgFocoTitulo">Registrar foco do vetor (<em>Aedes aegypti</em>)</h2>
+    <p style="margin:0 0 .9rem;font-size:.9rem;">O foco é gravado no grafo e ligado à localidade. Ele passa a contar no painel.</p>
+    <div class="campo"><label for="focoTipo">Tipo de criadouro</label>
+      <input type="text" id="focoTipo" list="listaCriadouros" autocomplete="off" placeholder="Ex.: Pneus a céu aberto">
+      <datalist id="listaCriadouros"><option value="Pneus a céu aberto"><option value="Caixa d'água descoberta"><option value="Vasos de plantas"><option value="Calhas entupidas"><option value="Lixo acumulado"><option value="Tambores e baldes"></datalist></div>
+    <div class="campo-linha">
+      <div class="campo"><label for="focoDensidade">Densidade vetorial</label>
+        <select id="focoDensidade"><option value="BAIXA">Baixa</option><option value="MEDIA" selected>Média</option><option value="ALTA">Alta</option></select></div>
+      <div class="campo"><label for="focoData">Data da identificação</label><input type="date" id="focoData"></div>
+    </div>
+    <div class="campo-linha">
+      <div class="campo"><label for="focoMunicipio">Município</label><input type="text" id="focoMunicipio" autocomplete="off" placeholder="Ex.: Manaus"></div>
+      <div class="campo"><label for="focoBairro">Bairro (opcional)</label><input type="text" id="focoBairro" autocomplete="off"></div>
+    </div>
+    <p class="msg-caixa" id="msgFoco" role="alert"></p>
+    <div class="caixa__acoes">
+      <button type="button" class="btn-secundario" id="btnCancelarFoco">Fechar</button>
+      <button type="submit" class="btn-primario" id="btnSalvarFoco">Registrar foco</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="caixa" id="dlgAuditoria" aria-labelledby="dlgAuditoriaTitulo" style="max-width:min(980px,96vw);">
+  <div class="aud-corpo">
+  <h2 id="dlgAuditoriaTitulo">Auditoria de acessos (LGPD)</h2>
+  <p style="margin:0 0 .6rem;font-size:.88rem;">Quem consultou dados de saúde e quando. Somente leitura. Abrir esta tela também fica registrado.</p>
+  <div class="campo-linha">
+    <div class="campo"><label for="audPeriodo">Período</label>
+      <select id="audPeriodo"><option value="1">Últimas 24 horas</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="0">Tudo</option></select></div>
+    <div class="campo"><label for="audAcao">Ação (opcional)</label><input type="text" id="audAcao" autocomplete="off" placeholder="como aparece na tabela"></div>
+  </div>
+  <p class="msg-caixa" id="msgAuditoria" role="status"></p>
+  <div class="tabela-usuarios-rolagem" style="max-height:none;flex:1 1 auto;min-height:8rem;">
+    <table class="tabela-focos"><caption>Registros de acesso, do mais recente ao mais antigo</caption>
+      <thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Recurso</th><th>Detalhe</th><th>IP</th></tr></thead>
+      <tbody id="corpoAuditoria"></tbody></table>
+  </div>
+  <div class="caixa__acoes">
+    <button type="button" class="btn-secundario" id="btnMaisAuditoria" hidden>Carregar mais</button>
+    <button type="button" class="btn-secundario" id="btnAtualizarAuditoria">Atualizar</button>
+    <button type="button" class="btn-primario" id="btnFecharAuditoria">Fechar</button>
+  </div>
+  </div>
+</dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================================
+     MEDGRAPH-AM — front-end ligado à API real (passos 18 e 19)
+     - Login por e-mail e senha (JWT); o perfil vem do servidor.
+     - ACS: registros salvos no aparelho (offline-first) e enviados por /api/v1/sincronizar.
+     - Médico: fila e parecer pelas rotas /validacoes.
+     - Gestor: indicadores, mapa e projeção pelas rotas /api/v1/mapa.
+     ===================================================================== */
+
+  // Endereço da API usado na entrega. Em desenvolvimento, quem entra pode informar outro na tela de login.
+  const API_PADRAO = 'https://entering-expiring-pectin.ngrok-free.dev';
+
+  const CH_API = 'medgraph_api';
+  const CH_SESSAO = 'medgraph_sessao_v2';
+  const TAM_LOTE = 20;               // atendimentos por envio (a API aceita até 100)
+  const INTERVALO_REENVIO_MS = 20000;
+  const INTERVALO_FILA_MEDICO_MS = 30000;
+  const MANTER_ENVIADOS = 30;        // quantos registros já enviados ficam (resumidos) no aparelho
+
+  /* ---------------- utilitários ---------------- */
+  const $ = (id) => document.getElementById(id);
+  const anunciar = (msg) => {
+    const r = $('regiao-viva');
+    r.textContent = '';
+    window.setTimeout(() => { r.textContent = msg; }, 50);
+  };
+  function lerArmazenamento(area, chave, padrao){
+    try { const bruto = area.getItem(chave); return bruto ? JSON.parse(bruto) : padrao; }
+    catch (erro) { return padrao; }
+  }
+  function gravarArmazenamento(area, chave, valor){
+    try { area.setItem(chave, JSON.stringify(valor)); return true; }
+    catch (erro) { return false; }
+  }
+  function removerArmazenamento(area, chave){ try { area.removeItem(chave); } catch (erro) {} }
+
+  function novoUuid(){
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    const b = new Uint8Array(16);
+    window.crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+  }
+  // Data com o fuso do aparelho (a API exige fuso), ex.: 2026-10-07T08:14:00-04:00
+  function isoComFuso(d){
+    const pad = (n) => String(n).padStart(2, '0');
+    const off = -d.getTimezoneOffset();
+    const sinal = off >= 0 ? '+' : '-';
+    const ao = Math.abs(off);
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${sinal}${pad(Math.floor(ao/60))}:${pad(ao%60)}`;
+  }
+  function dataLegivel(iso){
+    try { return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }); }
+    catch (erro) { return iso || '—'; }
+  }
+  function detalheDoErro(dados, padrao){
+    if (!dados) return padrao;
+    if (typeof dados.detail === 'string') return dados.detail;
+    if (Array.isArray(dados.detail) && dados.detail.length){
+      const d = dados.detail[0];
+      const campo = Array.isArray(d.loc) ? d.loc.filter((x) => x !== 'body').join('.') : '';
+      return (campo ? campo + ': ' : '') + (d.msg || padrao);
+    }
+    return padrao;
+  }
+
+  /* ---------------- arquivos (áudio e foto) guardados no aparelho ----------------
+     O localStorage guarda só texto e é pequeno; áudio e foto ficam no IndexedDB, que aceita arquivos.
+     Chave: <usuário>|<atendimento>|<audio|foto>. O arquivo é apagado do aparelho assim que o servidor o recebe. */
+  const BANCO_MIDIA = 'medgraph_midia_v1';
+  const LOJA_MIDIA = 'arquivos';
+  const LIMITE_MB = { audio: 15, foto: 8 };   // iguais aos do servidor (MAX_AUDIO_MB e MAX_FOTO_MB)
+  let bancoMidia = null;
+  function abrirBancoMidia(){
+    if (bancoMidia) return bancoMidia;
+    bancoMidia = new Promise((resolve, reject) => {
+      if (!window.indexedDB){ reject(new Error('sem IndexedDB')); return; }
+      const req = window.indexedDB.open(BANCO_MIDIA, 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore(LOJA_MIDIA); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('falha ao abrir o armazenamento'));
+    });
+    bancoMidia.catch(() => { bancoMidia = null; });
+    return bancoMidia;
+  }
+  async function operacaoMidia(modo, executar){
+    const bd = await abrirBancoMidia();
+    return new Promise((resolve, reject) => {
+      const tx = bd.transaction(LOJA_MIDIA, modo);
+      const pedido = executar(tx.objectStore(LOJA_MIDIA));
+      tx.oncomplete = () => resolve(pedido ? pedido.result : undefined);
+      tx.onerror = () => reject(tx.error || new Error('falha no armazenamento'));
+      tx.onabort = () => reject(tx.error || new Error('operação cancelada'));
+    });
+  }
+  const chaveMidia = (idAtendimento, categoria) => sessao.usuario.id + '|' + idAtendimento + '|' + categoria;
+  const gravarMidia = (id, cat, blob) => operacaoMidia('readwrite', (s) => s.put(blob, chaveMidia(id, cat)));
+  const lerMidia = (id, cat) => operacaoMidia('readonly', (s) => s.get(chaveMidia(id, cat)));
+  const apagarMidia = (id, cat) => operacaoMidia('readwrite', (s) => s.delete(chaveMidia(id, cat)));
+  const tamanhoLegivel = (bytes) => (bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB');
+
+  /* ---------------- servidor (API) ---------------- */
+  // Só aceita https (ou http no próprio computador), para não enviar senha em texto aberto.
+  function normalizarUrlApi(texto){
+    try {
+      const u = new URL(String(texto || '').trim());
+      const local = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+      if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) return null;
+      return (u.origin + u.pathname).replace(/\/+$/, '');
+    } catch (erro) { return null; }
+  }
+  function apiBase(){
+    const padrao = normalizarUrlApi(API_PADRAO);
+    let salvo = normalizarUrlApi(lerArmazenamento(localStorage, CH_API, ''));
+    // endereco temporario antigo (tunel que muda todo dia) nao vale mais quando existe um endereco fixo padrao
+    if (salvo && padrao && /\.trycloudflare\.com$/.test(new URL(salvo).hostname)) salvo = null;
+    if (salvo) return salvo;
+    if (padrao) return padrao;
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+    return '';
+  }
+
+  class ErroRede extends Error {}
+  let simulandoOffline = false;
+  let servidorRespondeu = true;   // última tentativa real de falar com o servidor deu certo?
+  let sessao = null;              // { token, usuario: { id, nome, email, perfil } }
+
+  async function chamarApi(caminho, opcoes){
+    const o = opcoes || {};
+    if (simulandoOffline) throw new ErroRede('Conexão simulada como perdida.');
+    const base = apiBase();
+    if (!base) throw new ErroRede('Servidor não configurado.');
+    const cab = { 'Accept': 'application/json' };
+    let corpo;
+    if (o.json !== undefined){ cab['Content-Type'] = 'application/json'; corpo = JSON.stringify(o.json); }
+    if (o.form){ cab['Content-Type'] = 'application/x-www-form-urlencoded'; corpo = new URLSearchParams(o.form); }
+    if (o.formData){ corpo = o.formData; }   // upload de arquivo: o navegador define o Content-Type com o boundary
+    if (o.bin) cab['Accept'] = '*/*';
+    if (/\.ngrok(-free)?\.(app|dev)$|\.ngrok\.io$/.test(new URL(base).hostname)) cab['ngrok-skip-browser-warning'] = '1';   // ngrok gratis mostra uma pagina de aviso que quebraria a API
+    const token = o.token !== undefined ? o.token : (sessao && sessao.token);
+    if (token) cab['Authorization'] = 'Bearer ' + token;
+
+    const ctl = new AbortController();
+    const t = window.setTimeout(() => ctl.abort(), o.timeoutMs || 20000);
+    let r;
+    try {
+      r = await fetch(base + caminho, { method: o.metodo || 'GET', headers: cab, body: corpo, signal: ctl.signal });
+    } catch (erro) {
+      servidorRespondeu = false;
+      atualizarStatusConexao();
+      throw new ErroRede('Sem resposta do servidor.');
+    } finally {
+      window.clearTimeout(t);
+    }
+    servidorRespondeu = true;
+    atualizarStatusConexao();
+    let dados = null;
+    if (o.bin && r.ok){ try { dados = await r.blob(); } catch (erro) { dados = null; } }
+    else { try { dados = await r.json(); } catch (erro) { dados = null; } }
+    if (r.status === 401 && token && !o.semExpirar) sessaoExpirou();
+    return { ok: r.ok, status: r.status, dados };
+  }
+
+  /* ---------------- elementos ---------------- */
+  const telaLogin = $('telaLogin');
+  const appPrincipal = $('appPrincipal');
+  const formLogin = $('formLogin');
+  const loginAviso = $('loginAviso');
+  const statusConexao = $('statusConexao');
+  const statusTexto = $('statusConexaoTexto');
+  const btnSimularConexao = $('btnSimularConexao');
+  const visaoACS = $('visaoACS');
+  const visaoGestor = $('visaoGestor');
+  const visaoMedico = $('visaoMedico');
+
+  const NOMES_PERFIL = { acs:'Agente Comunitário de Saúde', medico:'Médico / Especialista', gestor:'Gestor de Vigilância' };
+  const LEGENDA_PERFIL = { acs:'Triagem em campo', medico:'Validação Médica', gestor:'Painel de Vigilância' };
+  const TITULO_PERFIL = { acs:'tituloACS', medico:'tituloMedico', gestor:'tituloGestor' };
+
+  let temporizadores = [];
+  function limparTemporizadores(){ temporizadores.forEach((t) => window.clearInterval(t)); temporizadores = []; }
+
+  /* ================= SERVIDOR NA TELA DE LOGIN ================= */
+  function mostrarServidor(){
+    const base = apiBase();
+    $('servidorAtual').textContent = base || 'não configurado';
+    $('servidorUrl').value = base;
+  }
+  $('btnSalvarServidor').addEventListener('click', () => {
+    const url = normalizarUrlApi($('servidorUrl').value);
+    if (!url){
+      mostrarAvisoLogin('Endereço inválido. Use https://… (ou http://localhost:8000 no seu computador).');
+      return;
+    }
+    gravarArmazenamento(localStorage, CH_API, url);
+    mostrarServidor();
+    loginAviso.hidden = true;
+    anunciar('Servidor atualizado.');
+  });
+  function mostrarAvisoLogin(msg){ loginAviso.hidden = false; loginAviso.textContent = msg; }
+
+  /* ================= STATUS DE CONEXÃO ================= */
+  // Para decidir se vale TENTAR enviar: só o aparelho sem rede ou a simulação impedem. Se o servidor falhou na
+  // última tentativa, tentamos de novo mesmo assim (senão a fila nunca se recuperaria sozinha).
+  function podeTentar(){ return navigator.onLine !== false && !simulandoOffline; }
+  function conectado(){ return podeTentar() && servidorRespondeu; }  // só para exibir o estado
+  let ultimoTextoStatus = '';
+  function atualizarStatusConexao(){
+    const online = conectado();
+    statusConexao.classList.toggle('offline', !online);
+    let texto;
+    if (simulandoOffline) texto = 'Offline (simulado) — registros na fila local';
+    else if (navigator.onLine === false) texto = 'Offline — registros na fila local';
+    else if (!servidorRespondeu) texto = 'Servidor inacessível — registros na fila local';
+    else texto = 'Online — envio automático ativo';
+    statusTexto.textContent = texto;
+    btnSimularConexao.textContent = simulandoOffline ? 'Simular reconexão' : 'Simular perda de conexão (demonstração)';
+    btnSimularConexao.setAttribute('aria-pressed', String(simulandoOffline));
+    if (texto !== ultimoTextoStatus){ ultimoTextoStatus = texto; anunciar(texto + '.'); }
+  }
+  window.addEventListener('online', () => { servidorRespondeu = true; atualizarStatusConexao(); sincronizar(false); });
+  window.addEventListener('offline', atualizarStatusConexao);
+  btnSimularConexao.addEventListener('click', () => {
+    simulandoOffline = !simulandoOffline;
+    atualizarStatusConexao();
+    if (!simulandoOffline){ servidorRespondeu = true; atualizarStatusConexao(); sincronizar(false); }
+  });
+
+  /* ================= SESSÃO ================= */
+  function gravarSessao(){ gravarArmazenamento(sessionStorage, CH_SESSAO, sessao); }
+
+  function sessaoExpirou(){
+    if (!sessao) return;
+    ['dlgSenha', 'dlgUsuarios', 'dlgFoco', 'dlgAuditoria'].forEach((id) => { const d = $(id); if (d && d.open && d.close) d.close(); });
+    removerArmazenamento(sessionStorage, CH_SESSAO);
+    sessao = null;
+    limparTemporizadores();
+    limparMidiaDoFormulario();
+    liberarMidiaDaFicha();
+    appPrincipal.hidden = true;
+    telaLogin.hidden = false;
+    mostrarServidor();
+    mostrarAvisoLogin('Sua sessão expirou. Entre novamente. Os atendimentos salvos neste aparelho continuam guardados.');
+    anunciar('Sessão expirada.');
+  }
+
+  function entrarNaAplicacao(){
+    const perfil = sessao.usuario.perfil;
+    $('sessaoNome').textContent = sessao.usuario.nome;
+    $('sessaoPerfil').textContent = NOMES_PERFIL[perfil] || perfil;
+    $('marcaLegenda').textContent = LEGENDA_PERFIL[perfil] || '';
+
+    visaoACS.hidden = perfil !== 'acs';
+    visaoGestor.hidden = perfil !== 'gestor';
+    visaoMedico.hidden = perfil !== 'medico';
+    $('btnUsuarios').hidden = perfil !== 'gestor';
+    $('btnFocos').hidden = perfil !== 'gestor';
+    $('btnAuditoria').hidden = perfil !== 'gestor';
+    statusConexao.hidden = perfil !== 'acs';
+    btnSimularConexao.hidden = perfil !== 'acs';
+
+    telaLogin.hidden = true;
+    appPrincipal.hidden = false;
+    loginAviso.hidden = true;
+    $(TITULO_PERFIL[perfil]).focus();
+
+    limparTemporizadores();
+    assistenteOn = false;
+    atualizarAssistente();
+    if (perfil !== 'acs') carregarStatusAssistente();
+    if (perfil === 'acs'){
+      carregarFilaLocal();
+      renderizarFilaACS();
+      atualizarStatusConexao();
+      iniciarModelo();
+      sincronizar(false);
+      temporizadores.push(window.setInterval(() => { if ((pendentes().length || fila.some(temMidiaPendente)) && podeTentar()) sincronizar(false); }, INTERVALO_REENVIO_MS));
+    } else if (perfil === 'medico'){
+      carregarFilaMedico();
+      temporizadores.push(window.setInterval(() => { if (!document.hidden) carregarFilaMedico(true); }, INTERVALO_FILA_MEDICO_MS));
+    } else if (perfil === 'gestor'){
+      carregarPainelGestor();
+    }
+  }
+
+  formLogin.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    const email = $('loginEmail').value.trim().toLowerCase();
+    const senha = $('loginSenha').value;
+    if (!email || !senha){ mostrarAvisoLogin('Informe e-mail e senha.'); return; }
+    if (!apiBase()){ mostrarAvisoLogin('Configure o endereço do servidor (abaixo) antes de entrar.'); $('detalhesServidor').open = true; return; }
+
+    const btn = $('btnEntrar');
+    btn.disabled = true; btn.textContent = 'Entrando…';
+    loginAviso.hidden = true;
+    try {
+      const r = await chamarApi('/auth/login', { metodo: 'POST', form: { username: email, password: senha }, token: null });
+      if (!r.ok){
+        mostrarAvisoLogin(r.status === 401 ? 'E-mail ou senha incorretos.' : detalheDoErro(r.dados, 'Não foi possível entrar agora.'));
+        return;
+      }
+      const token = r.dados.access_token;
+      const eu = await chamarApi('/auth/me', { token, semExpirar: true });
+      if (!eu.ok){ mostrarAvisoLogin('Não foi possível carregar seu cadastro. Tente de novo.'); return; }
+      sessao = {
+        token,
+        usuario: { id: eu.dados.id, nome: eu.dados.nome, email: eu.dados.email, perfil: String(eu.dados.perfil).toLowerCase() },
+      };
+      gravarSessao();
+      $('loginSenha').value = '';
+      entrarNaAplicacao();
+      anunciar('Sessão iniciada como ' + sessao.usuario.nome + '.');
+    } catch (erro) {
+      if (erro instanceof ErroRede) mostrarAvisoLogin('Não foi possível falar com o servidor. Confira a internet e o endereço do servidor (abaixo).');
+      else mostrarAvisoLogin('Erro inesperado ao entrar.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Entrar';
+    }
+  });
+
+  $('btnSair').addEventListener('click', () => {
+    if (sessao && sessao.usuario.perfil === 'acs' && pendentes().length){
+      const ok = window.confirm('Há ' + pendentes().length + ' atendimento(s) ainda não enviado(s). Eles continuam salvos neste aparelho e serão enviados quando você entrar de novo com conexão. Sair mesmo assim?');
+      if (!ok) return;
+    }
+    ['dlgSenha', 'dlgUsuarios', 'dlgFoco', 'dlgAuditoria'].forEach((id) => { const d = $(id); if (d && d.open && d.close) d.close(); });
+    removerArmazenamento(sessionStorage, CH_SESSAO);
+    sessao = null;
+    limparTemporizadores();
+    limparMidiaDoFormulario();
+    liberarMidiaDaFicha();
+    appPrincipal.hidden = true;
+    telaLogin.hidden = false;
+    formLogin.reset();
+    mostrarServidor();
+    loginAviso.hidden = true;
+    anunciar('Sessão encerrada.');
+  });
+
+
+  /* =====================================================================
+     SENHA E USUÁRIOS (usa só rotas que a API já tem: /auth/trocar-senha, /auth/registrar, /usuarios/…)
+     ===================================================================== */
+  const abrirCaixa = (d) => { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
+  const fecharCaixa = (d) => { if (d.close) d.close(); else d.removeAttribute('open'); };
+  const dlgSenha = $('dlgSenha'), dlgUsuarios = $('dlgUsuarios');
+  function msgCaixa(el, texto, tipo){ el.textContent = texto || ''; el.className = 'msg-caixa' + (tipo ? ' ' + tipo : ''); }
+  function semAviso(){ return !!(sessao && sessao.token); }
+
+  // ---- trocar minha senha (todos os perfis)
+  $('btnMinhaSenha').addEventListener('click', () => {
+    $('formSenha').reset(); msgCaixa($('msgSenha'), ''); abrirCaixa(dlgSenha); $('senhaAtual').focus();
+  });
+  $('btnCancelarSenha').addEventListener('click', () => fecharCaixa(dlgSenha));
+  $('formSenha').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (!semAviso()) return;
+    const atual = $('senhaAtual').value, nova = $('senhaNova').value, nova2 = $('senhaNova2').value;
+    const aviso = $('msgSenha');
+    if (!atual || !nova){ msgCaixa(aviso, 'Preencha a senha atual e a nova.', 'erro'); return; }
+    if (nova.length < 8){ msgCaixa(aviso, 'A senha nova precisa ter pelo menos 8 caracteres.', 'erro'); return; }
+    if (nova !== nova2){ msgCaixa(aviso, 'As duas senhas novas não são iguais.', 'erro'); return; }
+    const btn = $('btnSalvarSenha'); btn.disabled = true; btn.textContent = 'Trocando…';
+    try {
+      const r = await chamarApi('/auth/trocar-senha', { metodo: 'POST', json: { senha_atual: atual, senha_nova: nova } });
+      if (!r.ok){ msgCaixa(aviso, detalheDoErro(r.dados, 'Não foi possível trocar a senha.'), 'erro'); return; }
+      fecharCaixa(dlgSenha);
+      sessaoExpirou();   // o servidor invalida os tokens antigos: é preciso entrar de novo
+      mostrarAvisoLogin('Senha alterada. Entre com a senha nova.');
+    } catch (erro) {
+      msgCaixa(aviso, erro instanceof ErroRede ? 'Sem conexão com o servidor. Tente de novo.' : 'Erro inesperado.', 'erro');
+    } finally { btn.disabled = false; btn.textContent = 'Trocar senha'; }
+  });
+
+  // ---- usuários (só gestor)
+  const ROTULO_EXTRA = { ACS: 'Microárea', MEDICO: 'CRM', GESTOR: 'Departamento' };
+  const CAMPO_EXTRA = { ACS: 'microarea', MEDICO: 'crm', GESTOR: 'departamento' };
+  function gerarSenhaInicial(){
+    const letras = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ', nums = '23456789';
+    const sorteio = (n) => { const b = new Uint32Array(1); window.crypto.getRandomValues(b); return b[0] % n; };
+    let t = '';
+    for (let i = 0; i < 10; i++) t += letras[sorteio(letras.length)];
+    t += nums[sorteio(nums.length)] + nums[sorteio(nums.length)];
+    return t.split('').sort(() => sorteio(3) - 1).join('');
+  }
+  function mostrarSenhaGerada(titulo, senha, extra){
+    const box = $('boxSenhaGerada'); box.textContent = '';
+    const a = document.createElement('div'); a.textContent = titulo; box.appendChild(a);
+    const c = document.createElement('code'); c.textContent = senha; box.appendChild(c);
+    const b = document.createElement('div'); b.style.marginTop = '.35rem'; b.textContent = extra; box.appendChild(b);
+    box.hidden = false;
+  }
+  let timerBusca = null;
+  async function carregarUsuarios(){
+    const msg = $('msgUsuarios'); msgCaixa(msg, 'Carregando…');
+    const busca = $('buscaUsuario').value.trim();
+    try {
+      const r = await chamarApi('/usuarios?limit=200' + (busca ? '&busca=' + encodeURIComponent(busca) : ''));
+      if (!r.ok){ if (r.status !== 401) msgCaixa(msg, detalheDoErro(r.dados, 'Não foi possível listar os usuários.'), 'erro'); return; }
+      renderizarUsuarios(r.dados || []);
+      msgCaixa(msg, (r.dados || []).length + ' usuário(s).');
+    } catch (erro) { msgCaixa(msg, 'Sem conexão com o servidor.', 'erro'); }
+  }
+  function celula(tr, texto){ const td = document.createElement('td'); td.textContent = texto; tr.appendChild(td); return td; }
+  function renderizarUsuarios(lista){
+    const corpo = $('corpoUsuarios'); corpo.textContent = '';
+    lista.forEach((u) => {
+      const tr = document.createElement('tr');
+      const td0 = document.createElement('td');
+      const nome = document.createElement('strong'); nome.textContent = u.nome; td0.appendChild(nome);
+      td0.appendChild(document.createElement('br'));
+      const em = document.createElement('span'); em.textContent = u.email; td0.appendChild(em);
+      tr.appendChild(td0);
+      celula(tr, ({ ACS:'ACS', MEDICO:'Médico', GESTOR:'Gestor' })[String(u.perfil).toUpperCase()] || u.perfil);
+      const tdS = celula(tr, u.ativo ? 'Ativo' : 'Desativado'); if (!u.ativo) tdS.className = 'pilula-inativo';
+      const tdA = document.createElement('td');
+      const eu = sessao && sessao.usuario && u.id === sessao.usuario.id;
+      if (eu){ const t = document.createElement('span'); t.textContent = 'você'; tdA.appendChild(t); }
+      else {
+        if (u.ativo){
+          const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn-mini'; b1.textContent = 'Redefinir senha';
+          b1.addEventListener('click', () => redefinirSenhaDe(u)); tdA.appendChild(b1);
+        }
+        const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn-mini' + (u.ativo ? ' btn-mini--perigo' : ''); b2.textContent = u.ativo ? 'Desativar' : 'Reativar';
+        b2.addEventListener('click', () => alternarAtivo(u)); tdA.appendChild(b2);
+      }
+      tr.appendChild(tdA); corpo.appendChild(tr);
+    });
+  }
+  async function redefinirSenhaDe(u){
+    if (!window.confirm('Redefinir a senha de ' + u.nome + '? As sessões abertas dele serão encerradas e a senha atual deixa de valer.')) return;
+    const msg = $('msgUsuarios');
+    try {
+      const r = await chamarApi('/usuarios/' + encodeURIComponent(u.id) + '/redefinir-senha', { metodo: 'POST' });
+      if (!r.ok){ if (r.status !== 401) msgCaixa(msg, detalheDoErro(r.dados, 'Não foi possível redefinir.'), 'erro'); return; }
+      mostrarSenhaGerada('Senha temporária de ' + u.nome + ' (aparece só agora):', r.dados.senha_temporaria, 'Entregue por um canal seguro. Peça que a pessoa troque em “Minha senha” no primeiro acesso.');
+      msgCaixa(msg, 'Senha redefinida.', 'ok');
+    } catch (erro) { msgCaixa(msg, 'Sem conexão com o servidor.', 'erro'); }
+  }
+  async function alternarAtivo(u){
+    const acao = u.ativo ? 'desativar' : 'reativar';
+    if (u.ativo && !window.confirm('Desativar ' + u.nome + '? O histórico é mantido, mas o login deixa de funcionar na hora.')) return;
+    const msg = $('msgUsuarios');
+    try {
+      const r = await chamarApi('/usuarios/' + encodeURIComponent(u.id) + '/' + acao, { metodo: 'POST' });
+      if (!r.ok){ if (r.status !== 401) msgCaixa(msg, detalheDoErro(r.dados, 'Não foi possível alterar.'), 'erro'); return; }
+      await carregarUsuarios();
+    } catch (erro) { msgCaixa(msg, 'Sem conexão com o servidor.', 'erro'); }
+  }
+  $('btnUsuarios').addEventListener('click', () => {
+    $('boxSenhaGerada').hidden = true; $('formNovoUsuario').hidden = true; $('buscaUsuario').value = '';
+    abrirCaixa(dlgUsuarios); carregarUsuarios();
+  });
+  $('btnFecharUsuarios').addEventListener('click', () => fecharCaixa(dlgUsuarios));
+  $('buscaUsuario').addEventListener('input', () => { window.clearTimeout(timerBusca); timerBusca = window.setTimeout(carregarUsuarios, 350); });
+  $('novoPerfil').addEventListener('change', () => { $('rotuloExtra').textContent = ROTULO_EXTRA[$('novoPerfil').value]; });
+  $('btnNovoUsuario').addEventListener('click', () => {
+    $('formNovoUsuario').reset(); $('rotuloExtra').textContent = ROTULO_EXTRA.ACS; $('novaSenha').value = gerarSenhaInicial();
+    msgCaixa($('msgNovoUsuario'), ''); $('boxSenhaGerada').hidden = true; $('formNovoUsuario').hidden = false; $('novoNome').focus();
+  });
+  $('btnGerarSenha').addEventListener('click', () => { $('novaSenha').value = gerarSenhaInicial(); });
+  $('btnCancelarNovo').addEventListener('click', () => { $('formNovoUsuario').hidden = true; });
+  $('formNovoUsuario').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const aviso = $('msgNovoUsuario');
+    const nome = $('novoNome').value.trim(), email = $('novoEmail').value.trim().toLowerCase(), perfil = $('novoPerfil').value;
+    const extra = $('novoExtra').value.trim(), senha = $('novaSenha').value;
+    if (nome.length < 3){ msgCaixa(aviso, 'Informe o nome completo.', 'erro'); return; }
+    if (!email || email.indexOf('@') < 1){ msgCaixa(aviso, 'Informe um e-mail válido.', 'erro'); return; }
+    if (senha.length < 8 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha)){ msgCaixa(aviso, 'A senha inicial precisa ter 8+ caracteres, com letras e números.', 'erro'); return; }
+    const corpo = { nome, email, senha, perfil };
+    if (extra) corpo[CAMPO_EXTRA[perfil]] = extra;
+    const btn = $('btnSalvarNovo'); btn.disabled = true; btn.textContent = 'Cadastrando…';
+    try {
+      const r = await chamarApi('/auth/registrar', { metodo: 'POST', json: corpo });
+      if (!r.ok){ if (r.status !== 401) msgCaixa(aviso, detalheDoErro(r.dados, 'Não foi possível cadastrar.'), 'erro'); return; }
+      $('formNovoUsuario').hidden = true;
+      mostrarSenhaGerada('Usuário cadastrado: ' + nome + '. Senha inicial (aparece só agora):', senha, 'Entregue por um canal seguro e peça que troque em “Minha senha” no primeiro acesso.');
+      await carregarUsuarios();
+    } catch (erro) {
+      msgCaixa(aviso, erro instanceof ErroRede ? 'Sem conexão com o servidor.' : 'Erro inesperado.', 'erro');
+    } finally { btn.disabled = false; btn.textContent = 'Cadastrar'; }
+  });
+
+
+  /* =====================================================================
+     GESTOR: focos do vetor, auditoria LGPD, sintomas do grafo (rotas já existentes na API)
+     ===================================================================== */
+  const dlgFoco = $('dlgFoco'), dlgAuditoria = $('dlgAuditoria');
+  function hojeISO(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+
+  // ---- registrar foco
+  $('btnFocos').addEventListener('click', () => {
+    $('formFoco').reset(); $('focoData').value = hojeISO(); msgCaixa($('msgFoco'), ''); abrirCaixa(dlgFoco); $('focoTipo').focus();
+  });
+  $('btnCancelarFoco').addEventListener('click', () => fecharCaixa(dlgFoco));
+  $('formFoco').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const aviso = $('msgFoco');
+    const tipo = $('focoTipo').value.trim(), municipio = $('focoMunicipio').value.trim(), bairro = $('focoBairro').value.trim();
+    const data = $('focoData').value, densidade = $('focoDensidade').value;
+    if (tipo.length < 2){ msgCaixa(aviso, 'Informe o tipo de criadouro.', 'erro'); return; }
+    if (municipio.length < 2){ msgCaixa(aviso, 'Informe o município.', 'erro'); return; }
+    if (!data){ msgCaixa(aviso, 'Informe a data da identificação.', 'erro'); return; }
+    const corpo = { tipo_criadouro: tipo, densidade_vetorial: densidade, data_identificacao: data, municipio };
+    if (bairro) corpo.bairro = bairro;
+    const btn = $('btnSalvarFoco'); btn.disabled = true; btn.textContent = 'Registrando…';
+    try {
+      const r = await chamarApi('/grafo/focos', { metodo: 'POST', json: corpo });
+      if (!r.ok){ if (r.status !== 401) msgCaixa(aviso, detalheDoErro(r.dados, 'Não foi possível registrar o foco.'), 'erro'); return; }
+      msgCaixa(aviso, 'Foco registrado em ' + (r.dados && r.dados.localidade ? r.dados.localidade : municipio) + '.', 'ok');
+      $('focoTipo').value = ''; $('focoBairro').value = '';
+      carregarPainelGestor();
+    } catch (erro) {
+      msgCaixa(aviso, erro instanceof ErroRede ? 'Sem conexão com o servidor.' : 'Erro inesperado.', 'erro');
+    } finally { btn.disabled = false; btn.textContent = 'Registrar foco'; }
+  });
+
+  // ---- auditoria
+  const AUD_TAM = 50; let audOffset = 0;
+  function dataHora(iso){ try { return new Date(iso).toLocaleString('pt-BR'); } catch (e) { return String(iso || ''); } }
+  async function carregarAuditoria(maisUm){
+    const msg = $('msgAuditoria'); const corpo = $('corpoAuditoria');
+    if (!maisUm){ audOffset = 0; corpo.textContent = ''; $('btnMaisAuditoria').hidden = true; }
+    msgCaixa(msg, 'Carregando…');
+    const dias = Number($('audPeriodo').value);
+    const acao = $('audAcao').value.trim();
+    let url = '/auditoria/acessos?limit=' + AUD_TAM + '&offset=' + audOffset;
+    if (dias > 0) url += '&desde=' + encodeURIComponent(new Date(Date.now() - dias * 86400000).toISOString());
+    if (acao) url += '&acao=' + encodeURIComponent(acao);
+    try {
+      const r = await chamarApi(url);
+      if (!r.ok){ if (r.status !== 401) msgCaixa(msg, detalheDoErro(r.dados, 'Não foi possível carregar a auditoria.'), 'erro'); return; }
+      const lista = r.dados || [];
+      lista.forEach((a) => {
+        const tr = document.createElement('tr');
+        celula(tr, dataHora(a.criado_em));
+        celula(tr, (a.usuario_nome || 'usuário removido') + ' (' + a.perfil + ')');
+        celula(tr, a.acao); celula(tr, a.recurso + (a.recurso_id ? ' ' + String(a.recurso_id).slice(0, 8) + '…' : ''));
+        celula(tr, a.detalhe || ''); celula(tr, a.ip || '');
+        corpo.appendChild(tr);
+      });
+      audOffset += lista.length;
+      $('btnMaisAuditoria').hidden = lista.length < AUD_TAM;
+      msgCaixa(msg, corpo.children.length ? corpo.children.length + ' registro(s) mostrado(s).' : 'Nenhum registro neste período.');
+    } catch (erro) { msgCaixa(msg, 'Sem conexão com o servidor.', 'erro'); }
+  }
+  $('btnAuditoria').addEventListener('click', () => { abrirCaixa(dlgAuditoria); carregarAuditoria(false); });
+  $('btnFecharAuditoria').addEventListener('click', () => fecharCaixa(dlgAuditoria));
+  $('btnAtualizarAuditoria').addEventListener('click', () => carregarAuditoria(false));
+  $('btnMaisAuditoria').addEventListener('click', () => carregarAuditoria(true));
+  $('audPeriodo').addEventListener('change', () => carregarAuditoria(false));
+  $('audAcao').addEventListener('change', () => carregarAuditoria(false));
+
+  // ---- sintomas mais frequentes e resumo do grafo (dentro do painel do gestor)
+  async function carregarSintomasEGrafo(){
+    const lista = $('listaSintomas'), resumo = $('resumoGrafo');
+    try {
+      const [s, g] = await Promise.all([chamarApi('/grafo/sintomas/frequencia?limit=10'), chamarApi('/grafo/resumo')]);
+      lista.textContent = '';
+      if (!s.ok){
+        const p = document.createElement('p'); p.className = 'msg-status';
+        p.textContent = s.status === 503 ? 'O grafo está indisponível agora.' : 'Não foi possível carregar os sintomas.';
+        lista.appendChild(p);
+      } else if (!(s.dados || []).length){
+        const p = document.createElement('p'); p.className = 'msg-status'; p.textContent = 'Ainda não há sintomas registrados no grafo.'; lista.appendChild(p);
+      } else {
+        const maior = Math.max.apply(null, s.dados.map((x) => x.pacientes)) || 1;
+        s.dados.forEach((x) => {
+          const linha = document.createElement('div'); linha.className = 'barra-sintoma' + (x.sinal_alarme ? ' barra-sintoma__alarme' : '');
+          const nome = document.createElement('span'); nome.textContent = x.sintoma;
+          if (x.sinal_alarme){ const t = document.createElement('span'); t.className = 'tag-alarme'; t.textContent = 'sinal de alarme'; nome.appendChild(t); }
+          const trilho = document.createElement('div'); trilho.className = 'barra-sintoma__trilho';
+          const pre = document.createElement('div'); pre.className = 'barra-sintoma__preenche'; pre.style.width = Math.max(3, Math.round(100 * x.pacientes / maior)) + '%';
+          trilho.appendChild(pre);
+          const n = document.createElement('span'); n.textContent = String(x.pacientes);
+          linha.appendChild(nome); linha.appendChild(trilho); linha.appendChild(n); lista.appendChild(linha);
+        });
+      }
+      if (g.ok && g.dados){
+        const soma = (o) => Object.keys(o || {}).reduce((t, k) => t + (Number(o[k]) || 0), 0);
+        resumo.textContent = 'Grafo: ' + soma(g.dados.nos) + ' nós e ' + soma(g.dados.relacoes) + ' relações.';
+      } else resumo.textContent = '';
+    } catch (erro) {
+      lista.textContent = ''; const p = document.createElement('p'); p.className = 'msg-status'; p.textContent = 'Sem conexão com o servidor.'; lista.appendChild(p);
+    }
+  }
+
+  /* ---------- Fonte e contraste ---------- */
+  let escala = 1;
+  const MIN_ESCALA = 0.85, MAX_ESCALA = 1.4, PASSO = 0.1;
+  $('btnAumentarFonte').addEventListener('click', () => {
+    escala = Math.min(MAX_ESCALA, escala + PASSO);
+    document.documentElement.style.setProperty('--fs-scale', escala.toFixed(2));
+    anunciar('Fonte aumentada.');
+  });
+  $('btnDiminuirFonte').addEventListener('click', () => {
+    escala = Math.max(MIN_ESCALA, escala - PASSO);
+    document.documentElement.style.setProperty('--fs-scale', escala.toFixed(2));
+    anunciar('Fonte diminuída.');
+  });
+  const btnContraste = $('btnContraste');
+  btnContraste.addEventListener('click', () => {
+    const ativo = document.body.classList.toggle('alto-contraste');
+    btnContraste.setAttribute('aria-pressed', String(ativo));
+    anunciar(ativo ? 'Modo de alto contraste ativado.' : 'Modo de alto contraste desativado.');
+  });
+
+  /* =====================================================================
+     ACS — FILA LOCAL E SINCRONIZAÇÃO
+     Cada item local: { id, paciente:{id,nome,data_nascimento?}, data_hora, atualizado_em, relato_texto,
+       latitude, longitude, bairro, municipio, nivel_risco, resultado, estado, erro? }
+     estado: 'pendente' (a enviar) | 'rejeitado' (o servidor recusou) | 'enviado' (resumido, sem dados clínicos)
+     ===================================================================== */
+  let fila = [];
+  let doServidor = [];       // últimos atendimentos do ACS conforme o servidor
+  let sincronizando = false;
+  let ultimoErroSync = '';
+
+  const chaveFila = () => 'medgraph_fila_v2_' + sessao.usuario.id;
+  function carregarFilaLocal(){ fila = lerArmazenamento(localStorage, chaveFila(), []); if (!Array.isArray(fila)) fila = []; }
+  function salvarFilaLocal(){
+    // Guarda só os últimos enviados (já resumidos); pendentes e rejeitados ficam sempre.
+    // Quem ainda tem áudio/foto para subir nunca é descartado (senão o arquivo ficaria órfão no aparelho).
+    const comMidia = (i) => Array.isArray(i.midia_pendente) && i.midia_pendente.length > 0;
+    const enviados = fila.filter((i) => i.estado === 'enviado' && !comMidia(i)).slice(0, MANTER_ENVIADOS);
+    fila = fila.filter((i) => i.estado !== 'enviado' || comMidia(i)).concat(enviados);
+    const ok = gravarArmazenamento(localStorage, chaveFila(), fila);
+    if (!ok) anunciar('Atenção: não foi possível gravar no aparelho. Libere espaço de armazenamento.');
+    return ok;
+  }
+  const pendentes = () => fila.filter((i) => i.estado === 'pendente');
+
+  const ORDEM_STATUS = { rejeitado:0, prioritario:1, padrao:2, midia:3, sincronizado:4, validado:5 };
+  const ROTULOS = { prioritario:'Alto risco — a enviar', padrao:'A enviar', midia:'Enviado — falta áudio/foto', sincronizado:'Enviado', validado:'Parecer registrado', rejeitado:'Recusado' };
+  const NOMES_MIDIA = { audio:'áudio', foto:'foto' };
+  const temMidiaPendente = (i) => Array.isArray(i.midia_pendente) && i.midia_pendente.length > 0;
+
+  function itensDoPainel(){
+    const mapa = new Map();
+    doServidor.forEach((a) => {
+      mapa.set(a.id, {
+        id: a.id, nome: a.paciente.nome, local: a.bairro || a.municipio || '—', quando: a.data_hora,
+        status: a.status_validacao !== 'PENDENTE' ? 'validado' : 'sincronizado',
+      });
+    });
+    fila.forEach((i) => {
+      const base = { id: i.id, nome: i.paciente.nome, local: i.bairro || i.municipio || '—', quando: i.data_hora };
+      if (i.estado === 'pendente') mapa.set(i.id, { ...base, status: i.nivel_risco === 'ALTO' ? 'prioritario' : 'padrao' });
+      else if (i.estado === 'rejeitado') mapa.set(i.id, { ...base, status: 'rejeitado', erro: i.erro });
+      else if (temMidiaPendente(i)) mapa.set(i.id, { ...base, status: 'midia', erro: i.midia_erro });
+      else if (!mapa.has(i.id)) mapa.set(i.id, { ...base, status: 'sincronizado', erro: i.midia_erro });
+      else if (i.midia_erro) mapa.get(i.id).erro = i.midia_erro;
+    });
+    return Array.from(mapa.values()).sort((a, b) =>
+      (ORDEM_STATUS[a.status] - ORDEM_STATUS[b.status]) || (new Date(b.quando) - new Date(a.quando)));
+  }
+
+  function renderizarFilaACS(){
+    const lista = $('listaPendentes');
+    lista.innerHTML = '';
+    const itens = itensDoPainel();
+    if (!itens.length){
+      const li = document.createElement('li');
+      li.className = 'cartao-vazio';
+      li.textContent = 'Nenhum atendimento ainda.';
+      lista.appendChild(li);
+    }
+    itens.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'item-pendente ' + (item.status === 'prioritario' ? 'prioritario' : item.status);
+      const bloco = document.createElement('span');
+      const nome = document.createElement('span'); nome.className = 'item-pendente__nome'; nome.textContent = item.nome;
+      const meta = document.createElement('span'); meta.className = 'item-pendente__meta'; meta.textContent = item.local + ' · ' + dataLegivel(item.quando);
+      bloco.appendChild(nome); bloco.appendChild(document.createElement('br')); bloco.appendChild(meta);
+      if (item.erro){
+        const e = document.createElement('span'); e.className = 'item-pendente__erro'; e.textContent = item.erro; bloco.appendChild(e);
+      }
+      const et = document.createElement('span'); et.className = 'etiqueta-status'; et.textContent = ROTULOS[item.status];
+      li.appendChild(bloco); li.appendChild(et);
+      lista.appendChild(li);
+    });
+    const n = pendentes().length;
+    $('contadorPendentes').textContent = String(n);
+    const rej = fila.filter((i) => i.estado === 'rejeitado').length;
+    let resumo = n ? (n + ' aguardando envio.') : 'Tudo enviado.';
+    if (rej) resumo += ' ' + rej + ' recusado(s) pelo servidor.';
+    const arquivos = fila.reduce((s, i) => s + (i.estado === 'enviado' && temMidiaPendente(i) ? i.midia_pendente.length : 0), 0);
+    if (arquivos) resumo += ' ' + arquivos + ' arquivo(s) de áudio/foto aguardando envio.';
+    if (ultimoErroSync && n) resumo += ' ' + ultimoErroSync;
+    $('resumoSync').textContent = resumo;
+    $('btnSincronizarAgora').disabled = sincronizando;
+  }
+
+  // Item completo -> formato que a API espera (campos internos ficam de fora)
+  function paraEnvio(i){
+    return {
+      id: i.id,
+      paciente: i.paciente,
+      data_hora: i.data_hora,
+      atualizado_em: i.atualizado_em,
+      relato_texto: i.relato_texto,
+      sintomas: i.sintomas || [],
+      latitude: i.latitude,
+      longitude: i.longitude,
+      bairro: i.bairro || undefined,
+      municipio: i.municipio || undefined,
+      nivel_risco: i.nivel_risco,
+      resultado: i.resultado,
+    };
+  }
+  function resumirEnviado(i){
+    // Depois de enviado, o aparelho guarda só o necessário para exibir (minimização de dados).
+    const r = { id: i.id, paciente: { nome: i.paciente.nome }, data_hora: i.data_hora, bairro: i.bairro, municipio: i.municipio, nivel_risco: i.nivel_risco, estado: 'enviado' };
+    if (temMidiaPendente(i)) r.midia_pendente = i.midia_pendente.slice();   // só a lista do que falta subir
+    return r;
+  }
+
+  // Sobe o áudio e a foto de atendimentos que o servidor já recebeu (PUT é idempotente: reenviar não duplica).
+  let enviandoMidia = false;
+  async function enviarMidias(){
+    if (!sessao || sessao.usuario.perfil !== 'acs' || enviandoMidia || !podeTentar()) return;
+    const alvos = fila.filter((i) => i.estado === 'enviado' && temMidiaPendente(i));
+    if (!alvos.length) return;
+    enviandoMidia = true;
+    let enviados = 0;
+    try {
+      for (const item of alvos){
+        for (const cat of item.midia_pendente.slice()){
+          let blob;
+          try { blob = await lerMidia(item.id, cat); } catch (erro) { blob = null; }
+          if (!blob){   // arquivo sumiu do aparelho: nada mais a fazer por ele
+            item.midia_pendente = item.midia_pendente.filter((c) => c !== cat);
+            item.midia_erro = 'O arquivo de ' + NOMES_MIDIA[cat] + ' não estava mais no aparelho.';
+            continue;
+          }
+          const fd = new FormData();
+          fd.append('arquivo', blob, cat === 'foto' ? 'foto.jpg' : 'audio');
+          const r = await chamarApi('/atendimentos/' + item.id + '/midia/' + cat, { metodo: 'PUT', formData: fd, timeoutMs: 90000 });
+          if (r.status === 401) return;
+          if (r.ok){
+            item.midia_pendente = item.midia_pendente.filter((c) => c !== cat);
+            try { await apagarMidia(item.id, cat); } catch (erro) { /* sobra no aparelho; não impede nada */ }
+            enviados += 1;
+          } else if (r.status === 404 || r.status === 429 || r.status >= 500){
+            // atendimento ainda não visível / servidor ocupado: tenta de novo mais tarde
+            continue;
+          } else {
+            // recusado de forma definitiva (formato, tamanho): não adianta insistir
+            item.midia_pendente = item.midia_pendente.filter((c) => c !== cat);
+            item.midia_erro = NOMES_MIDIA[cat].charAt(0).toUpperCase() + NOMES_MIDIA[cat].slice(1) + ' recusado: ' + detalheDoErro(r.dados, 'o servidor não aceitou o arquivo.');
+            try { await apagarMidia(item.id, cat); } catch (erro) { /* idem */ }
+          }
+        }
+        if (!temMidiaPendente(item)) delete item.midia_pendente;
+        salvarFilaLocal();
+        renderizarFilaACS();
+      }
+    } catch (erro) {
+      if (!(erro instanceof ErroRede)) console.error(erro);
+    } finally {
+      enviandoMidia = false;
+      salvarFilaLocal();
+      renderizarFilaACS();
+    }
+    if (enviados) anunciar(enviados + ' arquivo(s) de áudio/foto enviado(s).');
+  }
+
+  async function sincronizar(manual){
+    if (!sessao || sessao.usuario.perfil !== 'acs' || sincronizando) return;
+    const pend = pendentes();
+    if (!pend.length){
+      await enviarMidias();
+      if (manual && !fila.some(temMidiaPendente)) anunciar('Nada a enviar.');
+      await atualizarDoServidor();
+      return;
+    }
+    if (!podeTentar()){
+      ultimoErroSync = 'Sem conexão: os registros seguem seguros neste aparelho.';
+      renderizarFilaACS();
+      if (manual) anunciar('Sem conexão. Os registros continuam salvos no aparelho.');
+      return;
+    }
+    sincronizando = true;
+    ultimoErroSync = '';
+    renderizarFilaACS();
+    // RN03: alto risco primeiro; no resto, o mais antigo primeiro.
+    pend.sort((a, b) => ((a.nivel_risco === 'ALTO' ? 0 : 1) - (b.nivel_risco === 'ALTO' ? 0 : 1)) || (new Date(a.data_hora) - new Date(b.data_hora)));
+    let enviados = 0;
+    try {
+      for (let k = 0; k < pend.length; k += TAM_LOTE){
+        const lote = pend.slice(k, k + TAM_LOTE);
+        const r = await chamarApi('/api/v1/sincronizar', { metodo: 'POST', json: { atendimentos: lote.map(paraEnvio) } });
+        if (r.status === 401) return;                         // sessão expirou: nada se perde, tudo segue na fila
+        if (!r.ok){ ultimoErroSync = 'O servidor não aceitou o envio (' + r.status + '). Vamos tentar de novo.'; break; }
+        const confirmados = new Set(r.dados.ids_sincronizados || []);
+        const recusados = new Map((r.dados.itens || []).filter((x) => x.situacao === 'REJEITADO' && x.id).map((x) => [x.id, x.detalhe]));
+        lote.forEach((item) => {
+          const pos = fila.findIndex((f) => f.id === item.id);
+          if (pos < 0) return;
+          if (confirmados.has(item.id)){ fila[pos] = resumirEnviado(item); enviados += 1; }
+          else if (recusados.has(item.id)){ fila[pos].estado = 'rejeitado'; fila[pos].erro = recusados.get(item.id) || 'Registro recusado pelo servidor.'; }
+        });
+        salvarFilaLocal();
+        renderizarFilaACS();
+      }
+    } catch (erro) {
+      if (erro instanceof ErroRede) ultimoErroSync = 'Sem conexão com o servidor: os registros seguem seguros neste aparelho.';
+      else { ultimoErroSync = 'Erro inesperado no envio.'; console.error(erro); }
+    } finally {
+      sincronizando = false;
+      salvarFilaLocal();
+      renderizarFilaACS();
+    }
+    if (enviados) anunciar(enviados + ' atendimento(s) enviado(s) ao servidor.');
+    await enviarMidias();
+    await atualizarDoServidor();
+  }
+  $('btnSincronizarAgora').addEventListener('click', () => sincronizar(true));
+
+  async function atualizarDoServidor(){
+    if (!sessao || sessao.usuario.perfil !== 'acs' || !podeTentar()) return;
+    try {
+      const r = await chamarApi('/atendimentos?limit=30');
+      if (r.ok && Array.isArray(r.dados)){ doServidor = r.dados; renderizarFilaACS(); }
+    } catch (erro) { /* sem conexão: segue com o que há */ }
+  }
+
+  /* ---------- Localização (GPS real; RN05 exige latitude e longitude) ---------- */
+  let posicao = null;
+  $('btnCapturarGps').addEventListener('click', () => {
+    const saida = $('gpsResultado');
+    if (!('geolocation' in navigator)){ saida.textContent = 'Este aparelho não oferece localização por GPS.'; return; }
+    saida.textContent = 'Obtendo localização…';
+    navigator.geolocation.getCurrentPosition((p) => {
+      posicao = { latitude: p.coords.latitude, longitude: p.coords.longitude, precisao: p.coords.accuracy };
+      saida.textContent = 'Localização registrada: ' + posicao.latitude.toFixed(5) + ', ' + posicao.longitude.toFixed(5) + ' (precisão de ' + Math.round(posicao.precisao) + ' m)';
+      anunciar('Coordenadas GPS capturadas.');
+    }, (erro) => {
+      posicao = null;
+      saida.textContent = erro.code === 1
+        ? 'Permissão de localização negada. Libere a localização no navegador para continuar.'
+        : 'Não foi possível obter a localização. Vá para um local aberto e tente de novo.';
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  });
+
+  /* ---------- Áudio do relato (gravação real pelo microfone) e foto do exantema ----------
+     O áudio e a foto ficam no aparelho até o servidor receber o atendimento; só então sobem (PUT .../midia/...).
+     Eles NÃO são analisados: servem para o médico ouvir e ver. A triagem continua usando só o texto do relato. */
+  const MAX_SEGUNDOS_AUDIO = 180;
+  const ESCALA_MAXIMA_FOTO = 1600;     // lado maior, em pixels (a foto é reduzida e regravada como JPEG)
+  const midiaAtual = { audio: null, foto: null };   // { blob, url }
+  let gravacao = null;                 // { recorder, stream, partes, tipo, inicio, relogio, cancelar }
+  const gravadorEl = $('gravador');
+  const btnGravar = $('btnGravar');
+  const statusGravacao = $('statusGravacao');
+
+  const formatarTempo = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  function escolherTipoAudio(){
+    const candidatos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    return candidatos.find((t) => window.MediaRecorder && window.MediaRecorder.isTypeSupported && window.MediaRecorder.isTypeSupported(t)) || '';
+  }
+  function mostrarAudioGravado(){
+    const a = midiaAtual.audio;
+    const player = $('previewAudio'), descartar = $('btnDescartarAudio');
+    if (a){
+      player.src = a.url; player.hidden = false; descartar.hidden = false;
+      statusGravacao.textContent = '✓ Áudio gravado (' + formatarTempo(a.segundos) + ', ' + tamanhoLegivel(a.blob.size) + '). Ele será enviado junto com o atendimento.';
+      btnGravar.querySelector('#textoBtnGravar').textContent = 'Gravar de novo';
+    } else {
+      player.removeAttribute('src'); player.hidden = true; descartar.hidden = true;
+      statusGravacao.textContent = 'Nenhum áudio gravado.';
+      btnGravar.querySelector('#textoBtnGravar').textContent = 'Iniciar gravação';
+    }
+  }
+  function descartarAudio(){
+    if (midiaAtual.audio){ URL.revokeObjectURL(midiaAtual.audio.url); midiaAtual.audio = null; }
+    mostrarAudioGravado();
+  }
+  function encerrarCaptura(g){
+    window.clearInterval(g.relogio);
+    g.stream.getTracks().forEach((t) => t.stop());
+    gravadorEl.classList.remove('gravando');
+    btnGravar.setAttribute('aria-pressed', 'false');
+    btnGravar.disabled = false;
+  }
+  function pararGravacao(cancelar){
+    if (!gravacao) return;
+    gravacao.cancelar = !!cancelar;
+    if (gravacao.recorder.state !== 'inactive') gravacao.recorder.stop();
+  }
+  async function iniciarGravacao(){
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+      statusGravacao.textContent = 'Este navegador não permite gravar áudio. Digite o relato no campo abaixo.';
+      return;
+    }
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (erro) {
+      statusGravacao.textContent = (erro && (erro.name === 'NotAllowedError' || erro.name === 'SecurityError'))
+        ? 'Permissão do microfone negada. Libere o microfone no navegador para gravar.'
+        : 'Não foi possível acessar o microfone neste aparelho.';
+      return;
+    }
+    const tipo = escolherTipoAudio();
+    let recorder;
+    try { recorder = new MediaRecorder(stream, tipo ? { mimeType: tipo, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 }); }
+    catch (erro) { stream.getTracks().forEach((t) => t.stop()); statusGravacao.textContent = 'Este navegador não conseguiu iniciar a gravação.'; return; }
+
+    descartarAudio();   // uma nova gravação substitui a anterior
+    const g = { recorder, stream, partes: [], tipo: recorder.mimeType || tipo || '', inicio: Date.now(), relogio: null, cancelar: false };
+    gravacao = g;
+    recorder.addEventListener('dataavailable', (e) => { if (e.data && e.data.size) g.partes.push(e.data); });
+    recorder.addEventListener('stop', () => {
+      encerrarCaptura(g);
+      gravacao = null;
+      const segundos = Math.max(1, Math.round((Date.now() - g.inicio) / 1000));
+      const blob = new Blob(g.partes, { type: g.tipo || 'audio/webm' });
+      if (g.cancelar){ mostrarAudioGravado(); return; }
+      if (!blob.size){ statusGravacao.textContent = 'Nada foi gravado. Tente de novo.'; return; }
+      if (blob.size > LIMITE_MB.audio * 1048576){ statusGravacao.textContent = 'O áudio ficou maior que ' + LIMITE_MB.audio + ' MB. Grave um relato mais curto.'; return; }
+      midiaAtual.audio = { blob, url: URL.createObjectURL(blob), segundos };
+      mostrarAudioGravado();
+      anunciar('Áudio gravado.');
+    });
+    recorder.addEventListener('error', () => { statusGravacao.textContent = 'A gravação foi interrompida por um erro.'; pararGravacao(true); });
+
+    recorder.start(1000);
+    gravadorEl.classList.add('gravando');
+    btnGravar.setAttribute('aria-pressed', 'true');
+    btnGravar.querySelector('#textoBtnGravar').textContent = 'Parar gravação';
+    statusGravacao.textContent = 'Gravando… 0:00 (máximo ' + formatarTempo(MAX_SEGUNDOS_AUDIO) + ')';
+    anunciar('Gravação iniciada.');
+    g.relogio = window.setInterval(() => {
+      const s = (Date.now() - g.inicio) / 1000;
+      statusGravacao.textContent = 'Gravando… ' + formatarTempo(s) + ' (máximo ' + formatarTempo(MAX_SEGUNDOS_AUDIO) + ')';
+      if (s >= MAX_SEGUNDOS_AUDIO) pararGravacao(false);
+    }, 500);
+  }
+  btnGravar.addEventListener('click', () => { if (gravacao) pararGravacao(false); else iniciarGravacao(); });
+  $('btnDescartarAudio').addEventListener('click', () => { descartarAudio(); anunciar('Áudio descartado.'); });
+
+  /* Foto: reduzida e regravada como JPEG (cabe nos 8 MB do servidor e remove dados ocultos da foto, como a localização). */
+  async function prepararFoto(arquivo){
+    let origem = null;
+    if (window.createImageBitmap){
+      try { origem = await window.createImageBitmap(arquivo, { imageOrientation: 'from-image' }); } catch (erro) { origem = null; }
+    }
+    if (!origem){
+      origem = await new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(arquivo);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('formato')); };
+        img.src = url;
+      });
+    }
+    const w0 = origem.width || origem.naturalWidth, h0 = origem.height || origem.naturalHeight;
+    if (!w0 || !h0) throw new Error('vazia');
+    const k = Math.min(1, ESCALA_MAXIMA_FOTO / Math.max(w0, h0));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(w0 * k)); canvas.height = Math.max(1, Math.round(h0 * k));
+    canvas.getContext('2d').drawImage(origem, 0, 0, canvas.width, canvas.height);
+    if (origem.close) origem.close();
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+    if (!blob) throw new Error('codificação');
+    return blob;
+  }
+  function mostrarFoto(){
+    const f = midiaAtual.foto;
+    const mini = $('miniaturaFoto');
+    if (f){
+      mini.src = f.url; mini.hidden = false; $('btnRemoverFoto').hidden = false;
+      $('statusFoto').textContent = 'Foto pronta (' + tamanhoLegivel(f.blob.size) + ').';
+      $('previewFoto').classList.add('ativo');
+    } else {
+      mini.removeAttribute('src'); mini.hidden = true; $('btnRemoverFoto').hidden = true;
+      $('statusFoto').textContent = 'Nenhuma imagem selecionada';
+      $('previewFoto').classList.remove('ativo');
+    }
+  }
+  function descartarFoto(){
+    if (midiaAtual.foto){ URL.revokeObjectURL(midiaAtual.foto.url); midiaAtual.foto = null; }
+    mostrarFoto();
+  }
+  const inputFoto = $('inputFoto');
+  $('btnTirarFoto').addEventListener('click', () => { inputFoto.setAttribute('capture', 'environment'); inputFoto.value = ''; inputFoto.click(); });
+  $('btnAnexarFoto').addEventListener('click', () => { inputFoto.removeAttribute('capture'); inputFoto.value = ''; inputFoto.click(); });
+  inputFoto.addEventListener('change', async () => {
+    const arquivo = inputFoto.files && inputFoto.files[0];
+    if (!arquivo) return;
+    $('statusFoto').textContent = 'Preparando a foto…';
+    try {
+      const blob = await prepararFoto(arquivo);
+      if (blob.size > LIMITE_MB.foto * 1048576){ $('statusFoto').textContent = 'A foto ficou maior que ' + LIMITE_MB.foto + ' MB. Tente outra.'; return; }
+      descartarFoto();
+      midiaAtual.foto = { blob, url: URL.createObjectURL(blob) };
+      mostrarFoto();
+      anunciar('Foto anexada.');
+    } catch (erro) {
+      $('statusFoto').textContent = 'Não foi possível ler esta imagem (alguns formatos, como HEIC, não abrem neste navegador). Tire a foto pela câmera ou escolha um JPEG ou PNG.';
+    } finally {
+      inputFoto.value = '';
+    }
+  });
+  $('btnRemoverFoto').addEventListener('click', () => { descartarFoto(); anunciar('Foto removida.'); });
+
+  function limparMidiaDoFormulario(){
+    pararGravacao(true);
+    descartarAudio();
+    descartarFoto();
+  }
+
+  /* ---------- Triagem: modelo treinado (se existir no servidor) ou regra simples por sinais de alarme ---------- */
+  /*MODELO-INI (este bloco é conferido por teste automático contra app/services/ia_risco.py)*/
+  const SINONIMOS = {
+    'febre': 'febre',
+    'dor muscular': 'mialgia', 'mialgia': 'mialgia', 'dor no corpo': 'mialgia',
+    'dor de cabeca': 'cefaleia', 'cefaleia': 'cefaleia',
+    'manchas na pele': 'exantema', 'exantema': 'exantema', 'manchas vermelhas': 'exantema', 'erupcao': 'exantema',
+    'vomito': 'vomito', 'vomitos': 'vomito',
+    'nausea': 'nausea', 'enjoo': 'nausea',
+    'dor nas costas': 'dor_costas',
+    'conjuntivite': 'conjuntivite', 'olhos vermelhos': 'conjuntivite',
+    'artrite': 'artrite',
+    'dor nas articulacoes': 'artralgia', 'dor intensa nas articulacoes': 'artralgia', 'artralgia': 'artralgia',
+    'petequias': 'petequias',
+    'leucopenia': 'leucopenia',
+    'prova do laco positiva': 'prova_laco', 'prova do laco': 'prova_laco',
+    'dor atras dos olhos': 'dor_retro_orbital', 'dor retro-orbital': 'dor_retro_orbital',
+    'dor retroorbital': 'dor_retro_orbital', 'dor retro orbital': 'dor_retro_orbital',
+  };
+  function normalizarTexto(t){
+    return String(t).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().split(/\s+/).filter(Boolean).join(' ');
+  }
+  function modeloValido(m){
+    if (!m || typeof m !== 'object' || m.tipo !== 'regressao_logistica') return false;
+    if (typeof m.intercepto !== 'number') return false;
+    if (!Array.isArray(m.features) || !m.features.length) return false;
+    for (const f of m.features){
+      if (!f || typeof f.nome !== 'string' || typeof f.coef !== 'number') return false;
+      if (f.tipo === 'numerica' && !(f.desvio && typeof f.media === 'number')) return false;
+    }
+    return typeof m.limiar === 'number' && m.limiar > 0 && m.limiar < 1;
+  }
+  function sintomasParaVariaveis(modelo, sintomas){
+    const conhecidas = new Set(modelo.features.filter((f) => f.tipo === 'binaria').map((f) => f.nome));
+    const porRotulo = {};
+    modelo.features.forEach((f) => { if (f.rotulo) porRotulo[normalizarTexto(f.rotulo)] = f.nome; });
+    const marcadas = new Set(); const desconhecidos = [];
+    (sintomas || []).forEach((sint) => {
+      const chave = normalizarTexto(sint);
+      const nome = conhecidas.has(chave) ? chave : (porRotulo[chave] || SINONIMOS[chave]);
+      if (nome && conhecidas.has(nome)) marcadas.add(nome); else if (chave) desconhecidos.push(sint);
+    });
+    return { marcadas, desconhecidos };
+  }
+  function pontuar(modelo, sintomas, idadeAnos, sexo){
+    const marcadas = sintomasParaVariaveis(modelo, sintomas).marcadas;
+    let z = Number(modelo.intercepto);
+    modelo.features.forEach((f) => {
+      if (f.tipo === 'numerica'){
+        const padrao = modelo.idade_padrao_anos !== undefined && modelo.idade_padrao_anos !== null ? modelo.idade_padrao_anos : f.media;
+        const idade = (idadeAnos !== null && idadeAnos !== undefined && idadeAnos >= 0 && idadeAnos <= 110) ? idadeAnos : padrao;
+        z += f.coef * ((idade - f.media) / f.desvio);
+      } else if (f.nome === 'sexo_f'){
+        z += f.coef * (String(sexo || '').toUpperCase() === 'F' ? 1 : 0);
+      } else {
+        z += f.coef * (marcadas.has(f.nome) ? 1 : 0);
+      }
+    });
+    if (z >= 0) return 1 / (1 + Math.exp(-z));
+    const e = Math.exp(z);
+    return e / (1 + e);
+  }
+  /*MODELO-FIM*/
+
+  const FALLBACK_SINTOMAS = [
+    ['febre', 'Febre'], ['mialgia', 'Dor muscular'], ['cefaleia', 'Dor de cabeça'], ['dor_retro_orbital', 'Dor atrás dos olhos'],
+    ['exantema', 'Manchas na pele (exantema)'], ['vomito', 'Vômito'], ['nausea', 'Náusea'], ['dor_costas', 'Dor nas costas'],
+    ['conjuntivite', 'Conjuntivite'], ['artralgia', 'Dor intensa nas articulações'], ['artrite', 'Artrite'], ['petequias', 'Petéquias'],
+  ];
+  const ALARMES = [
+    { id: 'dor_abdominal', nome: 'dor abdominal intensa', rotulo: 'Dor abdominal intensa', re: /abdominal|dor na barriga/ },
+    { id: 'sangramento', nome: 'sangramento', rotulo: 'Sangramento (gengiva, nariz, fezes ou urina)', re: /sangr|hemorrag/ },
+    { id: 'vomitos', nome: 'vômitos persistentes', rotulo: 'Vômitos persistentes', re: /vomitos? (persistentes?|repetidos?|frequentes?|sem parar)|vomitando muito/ },
+    { id: 'tontura', nome: 'tontura', rotulo: 'Tontura, desmaio ou muita sonolência', re: /tontura|zonzo|desmai|sonolencia|muito sonolent/ },
+  ];
+  const CH_MODELO = 'medgraph_modelo_risco_v1';
+  const FONTE_REGRA = 'regra-palavras-chave-v1';
+  let modeloRisco = null;
+
+  function marcadosNaTela(){
+    return Array.from(document.querySelectorAll('#gradeSintomas input:checked, #gradeFatores input:checked')).map((c) => ({ nome: c.dataset.nome, rotulo: c.dataset.rotulo, grupo: c.dataset.grupo }));
+  }
+  function alarmesNaTela(){
+    return ALARMES.filter((a) => { const c = $('alarme_' + a.id); return c && c.checked; });
+  }
+  function montarChecklist(){
+    const antes = new Set(marcadosNaTela().map((m) => m.nome));
+    const gSint = $('gradeSintomas'), gFat = $('gradeFatores');
+    gSint.textContent = ''; gFat.textContent = '';
+    const itens = modeloRisco
+      ? modeloRisco.features.filter((f) => f.tipo === 'binaria' && f.nome !== 'sexo_f').map((f) => [f.nome, f.rotulo || f.nome, f.grupo === 'fator' ? 'fator' : 'sintoma'])
+      : FALLBACK_SINTOMAS.map(([n, r]) => [n, r, 'sintoma']);
+    itens.forEach(([nome, rotulo, grupo]) => {
+      const l = document.createElement('label');
+      const c = document.createElement('input'); c.type = 'checkbox'; c.id = 'sint_' + nome; c.dataset.nome = nome; c.dataset.rotulo = rotulo; c.dataset.grupo = grupo; c.checked = antes.has(nome);
+      const t = document.createElement('span'); t.textContent = rotulo;
+      l.appendChild(c); l.appendChild(t); (grupo === 'fator' ? gFat : gSint).appendChild(l);
+    });
+    $('campoFatores').hidden = !gFat.children.length;
+  }
+  function montarAlarmes(){
+    const grade = $('gradeAlarme'); grade.textContent = '';
+    ALARMES.forEach((a) => {
+      const l = document.createElement('label');
+      const c = document.createElement('input'); c.type = 'checkbox'; c.id = 'alarme_' + a.id;
+      const t = document.createElement('span'); t.textContent = a.rotulo;
+      l.appendChild(c); l.appendChild(t); grade.appendChild(l);
+    });
+  }
+  function atualizarStatusModelo(){
+    const el = $('statusModelo'); if (!el) return;
+    el.classList.toggle('teste', !!(modeloRisco && modeloRisco.sintetico));
+    if (!modeloRisco) el.textContent = 'Modelo de IA ainda não disponível neste aparelho: a triagem usa só os sinais de alarme marcados (regra simples).';
+    else if (modeloRisco.sintetico) el.textContent = 'ATENÇÃO: modelo de TESTE (dados sintéticos), sem valor clínico. Versão ' + modeloRisco.versao + '.';
+    else el.textContent = 'Modelo de risco carregado (versão ' + modeloRisco.versao + '). Funciona sem internet.';
+  }
+  function usarModelo(m){
+    modeloRisco = m;
+    montarChecklist();
+    atualizarStatusModelo();
+    if (ultimaInferencia){ ultimaInferencia = null; $('resultadoIA').classList.remove('visivel'); $('notaInferencia').textContent = 'O modelo mudou: execute a triagem de novo.'; }
+  }
+  function iniciarModelo(){
+    const guardado = lerArmazenamento(localStorage, CH_MODELO, null);
+    const novo = guardado && modeloValido(guardado) ? guardado : null;
+    if ((novo && !modeloRisco) || (!novo && modeloRisco) || (novo && modeloRisco && novo.versao !== modeloRisco.versao) || !$('gradeSintomas').children.length) usarModelo(novo);
+    atualizarModeloDoServidor();
+  }
+  async function atualizarModeloDoServidor(){
+    if (!sessao || sessao.usuario.perfil !== 'acs' || !podeTentar()) return;
+    try {
+      const r = await chamarApi('/api/v1/ia/modelo');
+      if (r.ok && modeloValido(r.dados)){
+        if (!modeloRisco || JSON.stringify(r.dados) !== JSON.stringify(modeloRisco)){ gravarArmazenamento(localStorage, CH_MODELO, r.dados); usarModelo(r.dados); }
+      } else if (r.status === 404){
+        removerArmazenamento(localStorage, CH_MODELO);
+        if (modeloRisco) usarModelo(null);
+      }
+    } catch (erro) { /* sem conexão: segue com o modelo guardado no aparelho */ }
+  }
+  window.addEventListener('online', () => { atualizarModeloDoServidor(); });
+  montarAlarmes(); montarChecklist(); atualizarStatusModelo();
+
+  // Sugere marcações a partir do texto do relato (ignora o que vem depois de "sem", "não", "nega"...). O agente confere.
+  function sugerirDoRelato(texto){
+    const t = normalizarTexto(texto);
+    const semNegacao = (re) => {
+      const m = re.exec(t); if (!m) return false;
+      const trecho = t.slice(0, m.index).split(/[.;,]/).pop();
+      return !/\b(sem|nao|nega|negou|nenhum|nenhuma)\b(\s+\w+){0,2}\s*$/.test(trecho);
+    };
+    const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    Object.keys(SINONIMOS).forEach((chave) => {
+      if (!semNegacao(new RegExp('(^|[^a-z])' + esc(chave) + '(?![a-z])'))) return;
+      const c = $('sint_' + SINONIMOS[chave]); if (c) c.checked = true;
+    });
+    ALARMES.forEach((a) => { if (semNegacao(a.re)){ const c = $('alarme_' + a.id); if (c) c.checked = true; } });
+  }
+  function idadeEmAnos(iso){
+    if (!iso) return null;
+    const n = new Date(iso + 'T00:00:00'); if (isNaN(n)) return null;
+    const hoje = new Date(); let a = hoje.getFullYear() - n.getFullYear();
+    if (hoje.getMonth() < n.getMonth() || (hoje.getMonth() === n.getMonth() && hoje.getDate() < n.getDate())) a -= 1;
+    return a >= 0 ? a : null;
+  }
+  function assinaturaTriagem(){
+    return JSON.stringify([$('relatoTexto').value.trim(), marcadosNaTela().map((m) => m.nome), alarmesNaTela().map((a) => a.id), $('dataNascimento').value, $('sexoPaciente').value]);
+  }
+
+  let ultimaInferencia = null;
+  const btnExecutarIA = $('btnExecutarIA');
+
+  btnExecutarIA.addEventListener('click', () => {
+    const relato = $('relatoTexto').value.trim();
+    const aviso = $('avisoVazio');
+    if (relato) sugerirDoRelato(relato);
+    const marcados = marcadosNaTela();
+    const alarmes = alarmesNaTela();
+    if (!relato && !marcados.length && !alarmes.length){
+      aviso.hidden = false;
+      $('resultadoIA').classList.remove('visivel');
+      ultimaInferencia = null;
+      anunciar('É necessário marcar sintomas ou informar o relato antes de executar a triagem.');
+      return;
+    }
+    aviso.hidden = true;
+    btnExecutarIA.disabled = true;
+    $('notaInferencia').textContent = 'Processando localmente…';
+
+    window.setTimeout(() => {
+      const idade = idadeEmAnos($('dataNascimento').value);
+      const sexo = $('sexoPaciente').value;
+      const alarme = alarmes.length > 0;
+      const sinais = alarmes.map((a) => a.nome);
+      let score, nivel, versao, textoNivel, pct = '—', rotulo, nota;
+      const evidencias = [];
+      if (modeloRisco){
+        score = pontuar(modeloRisco, marcados.map((m) => m.nome), idade, sexo);
+        const acima = score >= modeloRisco.limiar;
+        nivel = alarme ? 'ALTO' : (acima ? 'MODERADO' : 'BAIXO');
+        versao = (modeloRisco.versao || 'modelo') + (modeloRisco.sintetico ? '-sint' : '');
+        textoNivel = alarme ? 'Alto risco' : (acima ? 'Risco moderado' : 'Baixo risco');
+        pct = (score < 0.1 ? (score * 100).toFixed(1).replace('.', ',') : String(Math.round(score * 100))) + '%';
+        rotulo = (modeloRisco.rotulo_probabilidade || 'probabilidade estimada de dengue') + ' (modelo de regressão logística)';
+        nota = modeloRisco.sintetico
+          ? 'MODELO DE TESTE com dados sintéticos: sem valor clínico. Treine com os dados reais do SINAN antes de usar.'
+          : (modeloRisco.alvo_chave === 'gravidade'
+            ? 'Apoio à triagem (RN01): este modelo NÃO diz se a pessoa tem dengue; estima a chance de evoluir com sinais de alarme ou dengue grave entre casos de dengue notificados ao SINAN. Não foi validado em campo. Não é diagnóstico.'
+            : 'Apoio à triagem (RN01): o modelo foi treinado com notificações de dengue do SINAN e ainda não foi validado em campo. Não é diagnóstico.');
+        evidencias.push('Sintomas considerados pelo modelo: ' + (marcados.length ? marcados.map((m) => m.rotulo).join(', ') : 'nenhum marcado'));
+        evidencias.push('Pontuação ' + pct + (acima ? ' (acima' : ' (abaixo') + ' do limiar de ' + (modeloRisco.limiar * 100).toFixed(modeloRisco.limiar < 0.1 ? 1 : 0).replace('.', ',') + '% do modelo)');
+        if (typeof modeloRisco.taxa_base === 'number') evidencias.push('Nos dados de treino, ' + (modeloRisco.taxa_base * 100).toFixed(1).replace('.', ',') + '% dos casos tiveram esse desfecho.');
+        if (idade === null) evidencias.push('Data de nascimento não informada: o modelo usou a idade típica dos casos.');
+      } else {
+        score = alarme ? 0.78 : 0.55;           // valores fixos da regra: NÃO são probabilidade (por isso não aparecem na tela)
+        nivel = alarme ? 'ALTO' : 'MODERADO';
+        versao = FONTE_REGRA;
+        textoNivel = alarme ? 'Alto risco' : 'Suspeita leve';
+        rotulo = 'sem modelo: classificação só pelos sinais de alarme marcados';
+        nota = 'Regra simples (RN02). O modelo de IA ainda não foi carregado neste aparelho; nenhuma probabilidade é calculada.';
+        if (marcados.length) evidencias.push('Sintomas marcados: ' + marcados.map((m) => m.rotulo).join(', '));
+      }
+      const recomendacao = alarme
+        ? 'Encaminhamento médico prioritário'
+        : (nivel === 'MODERADO' ? 'Avaliação médica em breve; reavaliar se os sintomas piorarem' : 'Monitoramento domiciliar; reavaliar se os sintomas persistirem por mais de 48 horas');
+      evidencias.unshift(alarme ? 'Sinal de alarme marcado: ' + sinais.join(', ') + ' (qualquer sinal de alarme classifica como alto risco)' : 'Nenhum sinal de alarme marcado');
+      evidencias.push(recomendacao);
+
+      $('probabilidadeValor').textContent = pct;
+      $('rotuloPontuacao').textContent = rotulo;
+      $('notaPrototipo').textContent = nota;
+      const res = $('resultadoIA');
+      res.classList.remove('risco-baixo', 'risco-alto');
+      res.classList.add(nivel === 'ALTO' ? 'risco-alto' : 'risco-baixo');
+      $('seloRisco').textContent = textoNivel;
+      $('resultadoFontes').textContent = 'Baseado em: ' + (marcados.length || alarmes.length ? 'sintomas e sinais marcados' : 'relato de texto') + '.'
+        + ((midiaAtual.audio || midiaAtual.foto) ? ' O áudio e a foto anexados seguem para o médico, mas não são analisados.' : '');
+      const ul = $('listaSinais'); ul.textContent = '';
+      evidencias.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+      res.classList.add('visivel');
+      btnExecutarIA.disabled = false;
+      $('notaInferencia').textContent = 'Triagem concluída no aparelho.';
+      const sintomasEnvio = marcados.filter((m) => m.grupo !== 'fator').map((m) => m.rotulo).concat(sinais);
+      ultimaInferencia = {
+        assin: assinaturaTriagem(), relato, sintomas: sintomasEnvio, nivel_risco: nivel,
+        resultado: { score_probabilidade: score, sinais_alarme: sinais, recomendacao, modelo_versao: versao },
+      };
+      anunciar('Resultado da triagem disponível: ' + textoNivel + '.');
+    }, 400);
+  });
+  // Se qualquer dado da triagem mudar depois do resultado, ele deixa de valer.
+  function invalidarSeMudou(){
+    if (ultimaInferencia && ultimaInferencia.assin !== assinaturaTriagem()){
+      ultimaInferencia = null;
+      $('resultadoIA').classList.remove('visivel');
+      $('notaInferencia').textContent = 'Os dados mudaram: execute a triagem de novo.';
+    }
+  }
+  ['input', 'change'].forEach((ev) => $('formTriagem').addEventListener(ev, invalidarSeMudou));
+
+  /* ---------- Salvar atendimento (no aparelho) ---------- */
+  function mensagemSalvar(texto, tipo){
+    const el = $('msgSalvar');
+    el.textContent = texto;
+    el.className = 'msg-status ' + (tipo || '');
+  }
+
+  let salvandoAtendimento = false;
+  $('formTriagem').addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    if (salvandoAtendimento) return;
+    if (gravacao){ mensagemSalvar('Pare a gravação de áudio (passo 2) antes de salvar.', 'erro'); btnGravar.focus(); return; }
+    const nome = $('nomePaciente').value.trim().replace(/\s+/g, ' ');
+    if (nome.length < 2){ mensagemSalvar('Informe o nome do paciente (mínimo de 2 letras).', 'erro'); $('nomePaciente').focus(); return; }
+    if (!posicao){ mensagemSalvar('Capture a localização da visita (passo 1). Sem ela o atendimento não pode ser salvo.', 'erro'); $('btnCapturarGps').focus(); return; }
+    if (!ultimaInferencia){ mensagemSalvar('Execute a triagem do passo 4 antes de salvar.', 'erro'); btnExecutarIA.focus(); return; }
+    salvandoAtendimento = true;
+    try { await salvarAtendimento(nome); } finally { salvandoAtendimento = false; }
+  });
+
+  async function salvarAtendimento(nome){
+    const agora = new Date();
+    const paciente = { id: novoUuid(), nome };
+    const nasc = $('dataNascimento').value;
+    if (nasc) paciente.data_nascimento = nasc;
+    if ($('sexoPaciente').value) paciente.sexo = $('sexoPaciente').value;
+
+    const item = {
+      id: novoUuid(),
+      paciente,
+      data_hora: isoComFuso(agora),
+      atualizado_em: isoComFuso(agora),
+      relato_texto: ultimaInferencia.relato || null,
+      sintomas: ultimaInferencia.sintomas || [],
+      latitude: posicao.latitude,
+      longitude: posicao.longitude,
+      bairro: $('bairro').value.trim(),
+      municipio: $('municipio').value.trim(),
+      nivel_risco: ultimaInferencia.nivel_risco,
+      resultado: ultimaInferencia.resultado,
+      estado: 'pendente',
+    };
+    // Áudio e foto primeiro: se não couberem no aparelho, o atendimento não é salvo pela metade.
+    const guardados = [];
+    const anexos = ['audio', 'foto'].filter((c) => midiaAtual[c]);
+    try {
+      for (const cat of anexos){ await gravarMidia(item.id, cat, midiaAtual[cat].blob); guardados.push(cat); }
+    } catch (erro) {
+      for (const cat of guardados){ try { await apagarMidia(item.id, cat); } catch (e) { /* segue */ } }
+      mensagemSalvar('Não foi possível guardar o áudio/foto neste aparelho (armazenamento cheio ou bloqueado). O atendimento NÃO foi salvo; libere espaço ou remova o anexo.', 'erro');
+      return;
+    }
+    if (anexos.length) item.midia_pendente = anexos.slice();
+
+    fila.unshift(item);
+    if (!salvarFilaLocal()){
+      fila.shift();
+      for (const cat of guardados){ try { await apagarMidia(item.id, cat); } catch (e) { /* segue */ } }
+      mensagemSalvar('Não foi possível salvar neste aparelho (armazenamento cheio ou bloqueado). O atendimento NÃO foi salvo.', 'erro');
+      return;
+    }
+    renderizarFilaACS();
+    mensagemSalvar('Atendimento de ' + nome + ' salvo neste aparelho' + (podeTentar() ? ' e sendo enviado.' : '. Será enviado quando houver conexão.'), 'ok');
+    anunciar('Atendimento de ' + nome + ' salvo.');
+
+    limparMidiaDoFormulario();
+    $('formTriagem').reset();
+    $('municipio').value = 'Manaus';
+    $('gpsResultado').textContent = 'Nenhuma coordenada capturada ainda. A localização é obrigatória.';
+    posicao = null;
+    ultimaInferencia = null;
+    $('resultadoIA').classList.remove('visivel', 'risco-alto', 'risco-baixo');
+    $('avisoVazio').hidden = true;
+    $('notaInferencia').textContent = 'Funciona mesmo sem conexão.';
+    montarChecklist();
+
+    if (podeTentar()) window.setTimeout(() => sincronizar(false), 300);
+  }
+
+  /* =====================================================================
+     MÉDICO — fila e parecer (rotas /validacoes)
+     ===================================================================== */
+  const filaMedicoLista = $('filaMedicoLista');
+  let filaMedico = [];
+  let casoSelecionadoId = null;
+
+  async function carregarFilaMedico(silencioso){
+    const msg = $('filaMedicoContagem');
+    try {
+      const r = await chamarApi('/validacoes/fila?limit=50');
+      if (!r.ok){ if (r.status !== 401) msg.textContent = detalheDoErro(r.dados, 'Não foi possível carregar a fila.'); return; }
+      filaMedico = r.dados;
+      renderizarFilaMedico();
+    } catch (erro) {
+      if (erro instanceof ErroRede) msg.textContent = 'Sem conexão com o servidor. A fila será atualizada quando a conexão voltar.';
+    }
+  }
+  $('btnAtualizarFila').addEventListener('click', () => carregarFilaMedico());
+
+  const ehAlto = (a) => a.nivel_risco === 'ALTO';
+
+  function renderizarFilaMedico(){
+    $('filaMedicoContagem').textContent = filaMedico.length === 1
+      ? '1 atendimento aguardando parecer médico.'
+      : filaMedico.length + ' atendimentos aguardando parecer médico.';
+    filaMedicoLista.innerHTML = '';
+    filaMedico.forEach((a) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'caso-item ' + (ehAlto(a) ? 'alto' : 'medio');
+      btn.dataset.id = a.id;
+      if (a.id === casoSelecionadoId) btn.setAttribute('aria-current', 'true');
+      const n = document.createElement('span'); n.className = 'caso-item__nome'; n.textContent = a.paciente.nome;
+      const m = document.createElement('span'); m.className = 'caso-item__meta';
+      m.textContent = (a.bairro || a.municipio || '—') + ' · ' + (ehAlto(a) ? 'sinais de alarme' : 'suspeita leve') + ' · ' + dataLegivel(a.data_hora);
+      btn.appendChild(n); btn.appendChild(m);
+      btn.addEventListener('click', () => selecionarCaso(a.id));
+      li.appendChild(btn);
+      filaMedicoLista.appendChild(li);
+    });
+
+    if (!filaMedico.length){
+      casoSelecionadoId = null;
+      liberarMidiaDaFicha();
+      $('fichaConteudo').hidden = true;
+      $('medicoVazio').hidden = false;
+    } else if (!filaMedico.some((a) => a.id === casoSelecionadoId)){
+      selecionarCaso(filaMedico[0].id);
+    } else {
+      $('fichaConteudo').hidden = false;
+      $('medicoVazio').hidden = true;
+    }
+  }
+
+  /* Áudio e foto do atendimento: só são baixados quando o médico pede (cada abertura é registrada na auditoria, LGPD). */
+  const urlsFicha = { audio: null, foto: null };
+  function liberarMidiaDaFicha(){
+    ['audio', 'foto'].forEach((c) => { if (urlsFicha[c]){ URL.revokeObjectURL(urlsFicha[c]); urlsFicha[c] = null; } });
+    const p = $('playerAudio'), im = $('imagemFicha');
+    if (p){ p.pause(); p.removeAttribute('src'); p.hidden = true; }
+    if (im){ im.removeAttribute('src'); im.hidden = true; }
+  }
+  function prepararMidiaDaFicha(a){
+    liberarMidiaDaFicha();
+    const temAudio = !!a.relato_voz_path, temFoto = !!a.imagem_exantema_path;
+    $('fichaMidia').hidden = !(temAudio || temFoto);
+    $('fichaMidiaAudio').hidden = !temAudio;
+    $('fichaMidiaFoto').hidden = !temFoto;
+    $('btnCarregarAudio').disabled = false; $('btnCarregarFoto').disabled = false;
+    $('msgMidiaFicha').textContent = '';
+    $('blocoTranscricao').hidden = true; $('textoTranscricao').textContent = ''; $('msgTranscricao').textContent = '';
+    $('btnTranscrever').disabled = false;
+  }
+  async function carregarMidiaDaFicha(categoria){
+    const id = casoSelecionadoId;
+    if (!id) return;
+    const msg = $('msgMidiaFicha');
+    const btn = categoria === 'audio' ? $('btnCarregarAudio') : $('btnCarregarFoto');
+    btn.disabled = true;
+    msg.textContent = 'Baixando…';
+    try {
+      const r = await chamarApi('/atendimentos/' + id + '/midia/' + categoria, { bin: true, timeoutMs: 60000 });
+      if (id !== casoSelecionadoId) return;   // o médico trocou de ficha enquanto baixava
+      if (!r.ok){
+        btn.disabled = false;
+        if (r.status !== 401) msg.textContent = r.status === 404 ? 'O arquivo não está mais disponível.' : 'Não foi possível baixar o arquivo (' + r.status + ').';
+        return;
+      }
+      if (urlsFicha[categoria]) URL.revokeObjectURL(urlsFicha[categoria]);
+      urlsFicha[categoria] = URL.createObjectURL(r.dados);
+      if (categoria === 'audio'){ const p = $('playerAudio'); p.src = urlsFicha.audio; p.hidden = false; }
+      else { const im = $('imagemFicha'); im.src = urlsFicha.foto; im.hidden = false; }
+      msg.textContent = '';
+      anunciar(categoria === 'audio' ? 'Áudio carregado.' : 'Foto carregada.');
+    } catch (erro) {
+      btn.disabled = false;
+      msg.textContent = 'Sem conexão com o servidor. Tente de novo quando a conexão voltar.';
+    }
+  }
+  $('btnCarregarAudio').addEventListener('click', () => carregarMidiaDaFicha('audio'));
+  $('btnTranscrever').addEventListener('click', async () => {
+    const id = casoSelecionadoId; if (!id) return;
+    const btn = $('btnTranscrever'), msg = $('msgTranscricao');
+    btn.disabled = true; msg.textContent = 'Transcrevendo no servidor… pode levar alguns segundos.';
+    try {
+      let r = await chamarApi('/atendimentos/' + id + '/transcricao');       // já existe uma guardada?
+      if (r.status === 404) r = await chamarApi('/atendimentos/' + id + '/transcricao', { metodo: 'POST', timeoutMs: 240000 });
+      if (id !== casoSelecionadoId) return;
+      if (!r.ok){
+        btn.disabled = false;
+        if (r.status !== 401) msg.textContent = r.status === 503 ? 'A transcrição não está disponível neste servidor. Ouça o áudio.' : detalheDoErro(r.dados, 'Não foi possível transcrever este áudio.');
+        return;
+      }
+      $('textoTranscricao').textContent = (r.dados && r.dados.transcricao) || '(áudio sem fala reconhecida)';
+      $('blocoTranscricao').hidden = false; msg.textContent = ''; btn.disabled = false;
+      anunciar('Transcrição disponível.');
+    } catch (erro) {
+      btn.disabled = false;
+      msg.textContent = erro instanceof ErroRede ? 'Sem conexão com o servidor.' : 'Erro inesperado.';
+    }
+  });
+  $('btnCarregarFoto').addEventListener('click', () => carregarMidiaDaFicha('foto'));
+
+  /* ---------- Assistente de IA (Gemini): só rascunho de apoio ---------- */
+  let assistenteOn = false;
+  function atualizarAssistente(){
+    const perfil = sessao && sessao.usuario ? sessao.usuario.perfil : '';
+    $('painelResumoIA').hidden = !(assistenteOn && perfil === 'gestor');
+    $('blocoAssistente').hidden = !(assistenteOn && perfil === 'medico');
+    const a = casoSelecionadoId ? filaMedico.find((x) => x.id === casoSelecionadoId) : null;
+    $('blocoFotoIA').hidden = !(assistenteOn && perfil === 'medico' && a && !!a.imagem_exantema_path);
+  }
+  async function carregarStatusAssistente(){
+    try {
+      const r = await chamarApi('/api/v1/assistente/status');
+      assistenteOn = !!(r.ok && r.dados && r.dados.disponivel);
+    } catch (erro) { assistenteOn = false; }
+    atualizarAssistente();
+  }
+  function limparAssistenteDaFicha(){
+    ['textoResumoIA', 'textoFotoIA'].forEach((i) => { $(i).hidden = true; $(i).textContent = ''; });
+    ['msgResumoIA', 'msgFotoIA'].forEach((i) => { $(i).textContent = ''; });
+    $('cienteFotoIA').checked = false; $('btnDescreverFoto').disabled = true; $('btnResumirFicha').disabled = false;
+    atualizarAssistente();
+  }
+  function mostrarRascunhoIA(idTexto, texto, modelo){
+    const caixa = $(idTexto);
+    caixa.textContent = '';
+    const selo = document.createElement('span');
+    selo.className = 'assist-selo';
+    selo.textContent = 'Rascunho gerado por IA (' + (modelo || 'Gemini') + ') — confira antes de usar';
+    caixa.appendChild(selo);
+    caixa.appendChild(document.createTextNode(texto));
+    caixa.hidden = false;
+  }
+  function erroDoAssistente(r, padrao){
+    if (r.status === 503) return 'O assistente de IA não está disponível agora. O atendimento segue normalmente.';
+    if (r.status === 429) return 'Limite de pedidos ao assistente atingido. Tente mais tarde.';
+    if (r.status === 502) return 'O assistente não conseguiu responder. Tente de novo.';
+    return detalheDoErro(r.dados, padrao);
+  }
+  async function pedirAoAssistente(btn, msg, caminho, json, aoSucesso, idAtual){
+    btn.disabled = true; msg.textContent = 'Consultando o assistente… pode levar alguns segundos.';
+    try {
+      const r = await chamarApi(caminho, { metodo: 'POST', json: json, timeoutMs: 90000 });
+      if (idAtual !== undefined && idAtual !== casoSelecionadoId) return;   // o médico trocou de ficha
+      btn.disabled = false;
+      if (!r.ok){ if (r.status !== 401) msg.textContent = erroDoAssistente(r, 'Não foi possível usar o assistente.'); return; }
+      msg.textContent = '';
+      aoSucesso(r.dados || {});
+      anunciar('Rascunho do assistente disponível.');
+    } catch (erro) {
+      btn.disabled = false;
+      msg.textContent = erro instanceof ErroRede ? 'Sem conexão com o servidor.' : 'Erro inesperado.';
+    }
+  }
+  $('btnResumirFicha').addEventListener('click', () => {
+    const id = casoSelecionadoId; if (!id) return;
+    pedirAoAssistente($('btnResumirFicha'), $('msgResumoIA'), '/atendimentos/' + id + '/assistente/resumo', undefined,
+      (d) => mostrarRascunhoIA('textoResumoIA', d.resumo || '(sem texto)', d.modelo), id);
+  });
+  $('cienteFotoIA').addEventListener('change', () => { $('btnDescreverFoto').disabled = !$('cienteFotoIA').checked; });
+  $('btnDescreverFoto').addEventListener('click', () => {
+    const id = casoSelecionadoId; if (!id || !$('cienteFotoIA').checked) return;
+    pedirAoAssistente($('btnDescreverFoto'), $('msgFotoIA'), '/atendimentos/' + id + '/assistente/foto', { ciente: true },
+      (d) => mostrarRascunhoIA('textoFotoIA', d.descricao || '(sem texto)', d.modelo), id);
+  });
+  $('btnResumirPainel').addEventListener('click', () => {
+    const dias = Number($('filtroPeriodo').value) || 30;
+    pedirAoAssistente($('btnResumirPainel'), $('msgPainelIA'), '/api/v1/assistente/painel', { dias: dias },
+      (d) => mostrarRascunhoIA('textoPainelIA', d.resumo || '(sem texto)', d.modelo));
+  });
+
+  function selecionarCaso(id){
+    const a = filaMedico.find((x) => x.id === id);
+    if (!a) return;
+    casoSelecionadoId = id;
+    prepararMidiaDaFicha(a);
+    limparAssistenteDaFicha();
+    $('fichaConteudo').hidden = false;
+    $('medicoVazio').hidden = true;
+    filaMedicoLista.querySelectorAll('.caso-item').forEach((b) => {
+      if (b.dataset.id === id) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    });
+
+    $('tituloFicha').textContent = 'Ficha do atendimento — ' + a.paciente.nome;
+    $('fichaNome').textContent = a.paciente.nome;
+    $('fichaLocal').textContent = [a.bairro, a.municipio].filter(Boolean).join(', ') || '—';
+    $('fichaData').textContent = dataLegivel(a.data_hora);
+    $('fichaAgente').textContent = String(a.agente_id).slice(0, 8);
+    $('fichaRelato').textContent = a.relato_texto || 'Nenhum relato informado.';
+    const prob = a.probabilidade_dengue;
+    const versaoModelo = a.resultado && a.resultado.modelo_versao;
+    const doModelo = !!versaoModelo && versaoModelo.indexOf('regra-') !== 0;
+    $('fichaProbabilidade').textContent = doModelo && prob != null ? Math.round(prob * 100) + '%' : '—';
+    $('fichaLegendaIA').textContent = doModelo
+      ? (/gravidade/.test(versaoModelo) ? 'chance estimada de evoluir com sinais de alarme ou dengue grave (modelo ' : 'probabilidade estimada de dengue (modelo ') + versaoModelo + ')' + (/-sint$/.test(versaoModelo) ? ' MODELO DE TESTE, dados sintéticos' : '') + '. Indicativo, não é diagnóstico.'
+      : 'regra simples por sinais de alarme (sem modelo de IA; nenhuma probabilidade calculada).';
+    $('blocoIA').classList.toggle('medio', !ehAlto(a));
+    const selo = $('fichaSelo');
+    selo.textContent = ehAlto(a) ? 'Alto risco' : (a.nivel_risco === 'MODERADO' ? 'Risco moderado' : 'Suspeita leve');
+    selo.className = 'nivel-pilula ' + (ehAlto(a) ? 'alto' : 'medio');
+
+    const lista = $('fichaSinais'); lista.innerHTML = '';
+    const itens = [];
+    if (a.resultado){
+      if (a.resultado.sinais_alarme && a.resultado.sinais_alarme.length) itens.push('Sinais de alarme: ' + a.resultado.sinais_alarme.join(', '));
+      else itens.push('Nenhum sinal de alarme registrado');
+      if (a.resultado.recomendacao) itens.push(a.resultado.recomendacao);
+    } else itens.push('Sem resultado de triagem registrado');
+    if (a.sintomas && a.sintomas.length) itens.push('Sintomas informados: ' + a.sintomas.join(', '));
+    itens.forEach((t) => { const li = document.createElement('li'); li.textContent = t; lista.appendChild(li); });
+
+    $('confirmacaoEnvio').textContent = '';
+    $('confirmacaoEnvio').style.color = '';
+    $('formValidacao').reset();
+    $('campoNivelCorrigido').hidden = true;
+    anunciar('Ficha carregada: ' + a.paciente.nome);
+  }
+
+  document.querySelectorAll('input[name="parecer"]').forEach((r) => {
+    r.addEventListener('change', () => {
+      $('campoNivelCorrigido').hidden = document.querySelector('input[name="parecer"]:checked').value !== 'altera';
+    });
+  });
+
+  $('formValidacao').addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    if (casoSelecionadoId == null) return;
+    const conf = $('confirmacaoEnvio');
+    const falha = (t) => { conf.textContent = t; conf.style.color = 'var(--alerta-700)'; };
+    const observacao = $('observacaoMedica').value.trim();
+    if (observacao.length < 5){ falha('Escreva as observações clínicas (mínimo de 5 caracteres).'); $('observacaoMedica').focus(); return; }
+
+    const altera = document.querySelector('input[name="parecer"]:checked').value === 'altera';
+    const corpo = {
+      decisao: altera ? 'REJEITADO' : 'VALIDADO',
+      parecer: observacao,
+      encaminhamento: $('encaminhamento').value,
+    };
+    if (altera && $('nivelCorrigido').value) corpo.nivel_risco = $('nivelCorrigido').value;
+
+    const btn = $('formValidacao').querySelector('button[type="submit"]');
+    btn.disabled = true;
+    conf.textContent = 'Enviando…'; conf.style.color = '';
+    try {
+      const r = await chamarApi('/atendimentos/' + casoSelecionadoId + '/validacao', { metodo: 'POST', json: corpo });
+      if (r.ok){
+        conf.textContent = '✓ Parecer registrado e atendimento validado.';
+        conf.style.color = 'var(--mata-600)';
+        anunciar('Parecer médico registrado.');
+        casoSelecionadoId = null;
+        await carregarFilaMedico();
+      } else if (r.status === 409) falha('Este atendimento já foi avaliado por outro médico.');
+      else if (r.status !== 401) falha(detalheDoErro(r.dados, 'O servidor não aceitou o parecer.'));
+    } catch (erro) {
+      falha('Sem conexão: o parecer NÃO foi enviado. Tente de novo quando a conexão voltar.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* =====================================================================
+     GESTOR — indicadores, mapa e projeção (rotas /api/v1/mapa)
+     ===================================================================== */
+  let dadosLocalidades = [];   // densidade + projeção juntas, por localidade
+  let grafoOk = true;
+  let mapa = null, camada = null;
+
+  const nomeMunicipio = (nomeLocalidade) => {
+    const i = nomeLocalidade.lastIndexOf(', ');
+    return i >= 0 ? nomeLocalidade.slice(i + 2) : nomeLocalidade;
+  };
+  const corRisco = (p) => (p >= 0.3 ? '#D6483C' : p >= 0.1 ? '#E8A33D' : '#3E8E63');
+  const ROTULO_TENDENCIA = { CRESCENTE:'Crescente', ESTAVEL:'Estável', DECRESCENTE:'Em queda', DADOS_INSUFICIENTES:'Poucos dados' };
+  const ROTULO_EXPANSAO = { NENHUM:'—', BAIXO:'Baixo', MEDIO:'Médio', ALTO:'Alto' };
+
+  async function carregarPainelGestor(){
+    const msg = $('msgGestor');
+    msg.className = 'msg-status'; msg.textContent = 'Carregando dados…';
+    const dias = Number($('filtroPeriodo').value) || 30;
+    const ate = new Date();
+    const desde = new Date(ate.getTime() - dias * 86400000);
+    carregarSintomasEGrafo();
+    try {
+      const [d, p] = await Promise.all([
+        chamarApi('/api/v1/mapa/densidade?desde=' + encodeURIComponent(desde.toISOString()) + '&ate=' + encodeURIComponent(ate.toISOString())),
+        chamarApi('/api/v1/mapa/projecao?semanas=8&horizonte=2&minimo_casos=5&raio_km=3'),
+      ]);
+      if (!d.ok){ if (d.status !== 401){ msg.className = 'msg-status erro'; msg.textContent = detalheDoErro(d.dados, 'Não foi possível carregar o painel.'); } return; }
+      const proj = new Map();
+      if (p.ok) p.dados.features.forEach((f) => proj.set(f.properties.chave, f.properties));
+      $('avisoProjecao').textContent = p.ok ? (p.dados.aviso + ' Janela: últimas 8 semanas, projeção de 2 semanas.') : 'Projeção indisponível no momento.';
+
+      dadosLocalidades = d.dados.features.map((f) => {
+        const pr = f.properties;
+        return {
+          chave: pr.chave, nome: pr.localidade, total: pr.total_atendimentos, alto: pr.alto_risco,
+          proporcao: pr.proporcao_alto_risco, focos: pr.focos,
+          lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1],
+          proj: proj.get(pr.chave) || null,
+        };
+      });
+      grafoOk = d.dados.grafo_disponivel !== false;
+      preencherMunicipios();
+      desenharPainelGestor();
+      msg.textContent = dadosLocalidades.length ? '' : 'Nenhum atendimento no período selecionado.';
+    } catch (erro) {
+      msg.className = 'msg-status erro';
+      msg.textContent = 'Sem conexão com o servidor. O painel precisa de internet.';
+    }
+  }
+
+  function preencherMunicipios(){
+    const sel = $('filtroMunicipio');
+    const atual = sel.value;
+    const nomes = Array.from(new Set(dadosLocalidades.map((l) => nomeMunicipio(l.nome)))).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    sel.innerHTML = '';
+    const todos = document.createElement('option'); todos.value = ''; todos.textContent = 'Todos'; sel.appendChild(todos);
+    nomes.forEach((n) => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+    sel.value = nomes.includes(atual) ? atual : '';
+  }
+
+  function filtradas(){
+    const m = $('filtroMunicipio').value;
+    return m ? dadosLocalidades.filter((l) => nomeMunicipio(l.nome) === m) : dadosLocalidades;
+  }
+
+  function celula(tr, texto){ const td = document.createElement('td'); td.textContent = texto; tr.appendChild(td); return td; }
+
+  function desenharPainelGestor(){
+    const lista = filtradas();
+    const soma = (f) => lista.reduce((s, l) => s + f(l), 0);
+    $('indicadorAltoRisco').textContent = String(soma((l) => l.alto));
+    $('indicadorTotal').textContent = String(soma((l) => l.total));
+    $('indicadorCrescimento').textContent = String(lista.filter((l) => l.proj && l.proj.tendencia === 'CRESCENTE').length);
+    $('indicadorFocos').textContent = !grafoOk ? '—' : String(soma((l) => l.focos || 0));
+
+    // tabela completa
+    const corpo = $('corpoTabelaLocalidades'); corpo.innerHTML = '';
+    lista.slice().sort((a, b) => b.total - a.total).forEach((l) => {
+      const tr = document.createElement('tr');
+      celula(tr, l.nome); celula(tr, String(l.total)); celula(tr, String(l.alto));
+      celula(tr, l.focos == null ? '—' : String(l.focos));
+      celula(tr, l.proj ? ROTULO_TENDENCIA[l.proj.tendencia] : '—');
+      celula(tr, l.proj && l.proj.casos_previstos.length ? String(l.proj.casos_previstos[0]) : '—');
+      celula(tr, l.proj ? ROTULO_EXPANSAO[l.proj.risco_de_expansao] : '—');
+      corpo.appendChild(tr);
+    });
+    if (!lista.length){ const tr = document.createElement('tr'); const td = celula(tr, 'Sem dados no período.'); td.colSpan = 7; corpo.appendChild(tr); }
+
+    // prioridades: mais atendimentos de alto risco
+    const pri = $('corpoTabelaPrioridades'); pri.innerHTML = '';
+    lista.filter((l) => l.alto > 0).sort((a, b) => b.alto - a.alto || b.proporcao - a.proporcao).slice(0, 5).forEach((l) => {
+      const tr = document.createElement('tr');
+      celula(tr, l.nome);
+      const td = document.createElement('td');
+      const pil = document.createElement('span');
+      pil.className = 'nivel-pilula ' + (l.proporcao >= 0.3 ? 'alto' : l.proporcao >= 0.1 ? 'medio' : 'baixo');
+      pil.textContent = l.alto + ' (' + Math.round(l.proporcao * 100) + '%)';
+      td.appendChild(pil); tr.appendChild(td);
+      pri.appendChild(tr);
+    });
+    if (!pri.children.length){ const tr = document.createElement('tr'); const td = celula(tr, 'Nenhuma localidade com alto risco.'); td.colSpan = 2; pri.appendChild(tr); }
+
+    desenharMapa(lista);
+  }
+
+  function desenharMapa(lista){
+    const alvo = $('mapaLeaflet');
+    if (!window.L){
+      alvo.innerHTML = '';
+      const p = document.createElement('p'); p.className = 'mapa-erro';
+      p.textContent = 'O mapa não pôde ser carregado (sem internet ou biblioteca bloqueada). Use “Ver como tabela”.';
+      alvo.style.height = 'auto'; alvo.appendChild(p);
+      return;
+    }
+    if (!mapa){
+      mapa = window.L.map(alvo).setView([-3.119, -60.021], 11);
+      window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; contribuidores do OpenStreetMap' }).addTo(mapa);
+      camada = window.L.layerGroup().addTo(mapa);
+    }
+    camada.clearLayers();
+    const pontos = [];
+    lista.forEach((l) => {
+      const expansao = l.proj && l.proj.risco_de_expansao && l.proj.risco_de_expansao !== 'NENHUM';
+      const c = window.L.circleMarker([l.lat, l.lon], {
+        radius: Math.min(30, 8 + Math.sqrt(l.total) * 3),
+        color: expansao ? '#16231F' : corRisco(l.proporcao), weight: expansao ? 3 : 1.5, dashArray: expansao ? '5 4' : null,
+        fillColor: corRisco(l.proporcao), fillOpacity: 0.7,
+      });
+      const pop = document.createElement('div');
+      const t = document.createElement('strong'); t.textContent = l.nome; pop.appendChild(t);
+      const linhas = [
+        l.total + ' atendimento(s), ' + l.alto + ' de alto risco',
+        l.focos == null ? 'Focos do vetor: indisponível' : 'Focos do vetor: ' + l.focos,
+      ];
+      if (l.proj){
+        linhas.push('Tendência: ' + ROTULO_TENDENCIA[l.proj.tendencia]);
+        if (l.proj.casos_previstos.length) linhas.push('Previsão para a próxima semana: ' + l.proj.casos_previstos[0] + ' atendimento(s)');
+        if (expansao) linhas.push('Risco de expansão: ' + ROTULO_EXPANSAO[l.proj.risco_de_expansao] + ' (perto de ' + l.proj.vizinhas_em_crescimento.map((v) => v.localidade).join('; ') + ')');
+      }
+      linhas.forEach((x) => { const d = document.createElement('div'); d.textContent = x; pop.appendChild(d); });
+      c.bindPopup(pop);
+      c.addTo(camada);
+      pontos.push([l.lat, l.lon]);
+    });
+    if (pontos.length) mapa.fitBounds(pontos, { padding: [30, 30], maxZoom: 14 });
+    window.setTimeout(() => mapa.invalidateSize(), 50);
+  }
+
+  $('formFiltros').addEventListener('submit', (e) => { e.preventDefault(); carregarPainelGestor(); });
+  $('filtroMunicipio').addEventListener('change', () => desenharPainelGestor());
+  $('btnExportarRelatorio').addEventListener('click', () => window.print());
+
+  const btnAlternarMapa = $('btnAlternarVisaoMapa');
+  btnAlternarMapa.addEventListener('click', () => {
+    const mostrandoTabela = $('visaoTabela').style.display !== 'none';
+    $('visaoTabela').style.display = mostrandoTabela ? 'none' : 'block';
+    $('visaoMapa').style.display = mostrandoTabela ? 'block' : 'none';
+    btnAlternarMapa.setAttribute('aria-pressed', String(!mostrandoTabela));
+    btnAlternarMapa.textContent = mostrandoTabela ? 'Ver como tabela' : 'Ver como mapa';
+    if (mostrandoTabela && mapa) window.setTimeout(() => mapa.invalidateSize(), 50);
+    anunciar(mostrandoTabela ? 'Exibindo o mapa.' : 'Exibindo os dados em tabela.');
+  });
+
+  /* ================= INÍCIO ================= */
+  mostrarServidor();
+  const guardada = lerArmazenamento(sessionStorage, CH_SESSAO, null);
+  if (guardada && guardada.token && guardada.usuario && guardada.usuario.id){
+    sessao = guardada;
+    entrarNaAplicacao();
+    // confere em segundo plano; sem rede, segue com a sessão guardada (o ACS precisa trabalhar offline)
+    chamarApi('/auth/me').catch(() => {});
+  }
+  // Com endereco fixo embutido, a caixa "Servidor" fica escondida. Para mostrar (suporte): abra o site com ?servidor=1 no fim do endereco.
+  (function(){
+    try {
+      const mostrar = /[?&]servidor=1\b/.test(window.location.search);
+      const caixa = document.getElementById('detalhesServidor');
+      if (caixa && normalizarUrlApi(API_PADRAO) && !mostrar) caixa.hidden = true;
+    } catch (erro) { /* sem efeito: a caixa continua visivel */ }
+  })();
+
+})();
+
+</script>
+
+</body>
+</html>

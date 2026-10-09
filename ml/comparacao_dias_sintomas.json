@@ -1,0 +1,59 @@
+{
+  "sem_dias": {
+    "limiar": 0.0108,
+    "acuracia": 0.389,
+    "precisao": 0.031,
+    "sensibilidade": 0.7978,
+    "especificidade": 0.3789,
+    "f1": 0.0597,
+    "roc_auc": 0.6506,
+    "pr_auc": 0.0487,
+    "brier": 0.0236,
+    "matriz_confusao": {
+      "vn": 79110,
+      "fp": 129703,
+      "fn": 1052,
+      "vp": 4151
+    },
+    "roc_auc_ic95": [
+      0.6426,
+      0.6584
+    ],
+    "f1_ic95": [
+      0.0579,
+      0.0616
+    ]
+  },
+  "com_dias": {
+    "limiar": 0.0109,
+    "acuracia": 0.4281,
+    "precisao": 0.0331,
+    "sensibilidade": 0.7978,
+    "especificidade": 0.4188,
+    "f1": 0.0635,
+    "roc_auc": 0.6782,
+    "pr_auc": 0.0564,
+    "brier": 0.0235,
+    "matriz_confusao": {
+      "vn": 87460,
+      "fp": 121353,
+      "fn": 1052,
+      "vp": 4151
+    },
+    "roc_auc_ic95": [
+      0.6703,
+      0.6859
+    ],
+    "f1_ic95": [
+      0.0616,
+      0.0654
+    ]
+  },
+  "razao_de_chances_por_desvio_padrao_de_dias": 1.373,
+  "dias_media": 2.93,
+  "dias_desvio": 2.49,
+  "dias_mediana_imputada": 2.0,
+  "proporcao_dias_ausentes_ou_invalidos": 0.0333,
+  "casos": 1426773,
+  "teste": 214016
+}

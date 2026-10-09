@@ -1,0 +1,2 @@
+# Transcrição de áudio no servidor (passo 22). Roda só com CPU; o modelo é baixado na primeira transcrição.
+faster-whisper>=1.0

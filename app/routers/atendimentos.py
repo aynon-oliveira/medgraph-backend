@@ -40,6 +40,7 @@ def _para_saida(a: Atendimento) -> AtendimentoOut:
         data_hora=a.data_hora,
         relato_texto=a.relato_texto,
         sintomas=list(a.sintomas or []),
+        dias_sintomas=a.dias_sintomas,
         relato_voz_path=a.relato_voz_path,
         imagem_exantema_path=a.imagem_exantema_path,
         latitude=ponto.y,
@@ -98,6 +99,7 @@ def criar_atendimento(
         data_hora=dados.data_hora,
         relato_texto=dados.relato_texto,
         sintomas=dados.sintomas,
+        dias_sintomas=dados.dias_sintomas,
         relato_voz_path=dados.relato_voz_path,
         imagem_exantema_path=dados.imagem_exantema_path,
         localizacao=from_shape(Point(dados.longitude, dados.latitude), srid=4326),
@@ -119,6 +121,7 @@ def criar_atendimento(
                 score_probabilidade=dados.resultado.score_probabilidade,
                 sinais_alarme=dados.resultado.sinais_alarme,
                 recomendacao=dados.resultado.recomendacao,
+                modelo_versao=dados.resultado.modelo_versao,
             )
         )
 

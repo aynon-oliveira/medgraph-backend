@@ -54,12 +54,14 @@ def _gravar_resultado(db: Session, atendimento: Atendimento, dados: AtendimentoS
                 score_probabilidade=dados.resultado.score_probabilidade,
                 sinais_alarme=dados.resultado.sinais_alarme,
                 recomendacao=dados.resultado.recomendacao,
+                modelo_versao=dados.resultado.modelo_versao,
             )
         )
     else:
         atendimento.resultado.score_probabilidade = dados.resultado.score_probabilidade
         atendimento.resultado.sinais_alarme = dados.resultado.sinais_alarme
         atendimento.resultado.recomendacao = dados.resultado.recomendacao
+        atendimento.resultado.modelo_versao = dados.resultado.modelo_versao
 
 
 def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSync:
@@ -88,6 +90,7 @@ def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSyn
             data_hora=dados.data_hora,
             relato_texto=dados.relato_texto,
             sintomas=dados.sintomas,
+            dias_sintomas=dados.dias_sintomas,
             relato_voz_path=dados.relato_voz_path,
             imagem_exantema_path=dados.imagem_exantema_path,
             localizacao=ponto,
@@ -132,6 +135,7 @@ def _processar(db: Session, usuario: Usuario, dados: AtendimentoSync) -> ItemSyn
     existente.data_hora = dados.data_hora
     existente.relato_texto = dados.relato_texto
     existente.sintomas = dados.sintomas
+    existente.dias_sintomas = dados.dias_sintomas
     existente.relato_voz_path = dados.relato_voz_path
     existente.imagem_exantema_path = dados.imagem_exantema_path
     existente.localizacao = ponto

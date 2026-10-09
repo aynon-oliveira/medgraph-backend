@@ -20,6 +20,7 @@ class ResultadoInferencia(Base):
     score_probabilidade: Mapped[float] = mapped_column(Float)
     sinais_alarme: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     recomendacao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    modelo_versao: Mapped[str | None] = mapped_column(String(60), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

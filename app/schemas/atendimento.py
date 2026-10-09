@@ -38,6 +38,7 @@ class ResultadoInferenciaIn(BaseModel):
     score_probabilidade: float = Field(ge=0, le=1)
     sinais_alarme: list[str] = Field(default_factory=list)
     recomendacao: str | None = None
+    modelo_versao: str | None = Field(default=None, max_length=60)  # qual modelo/regra gerou o risco
 
 
 class ResultadoInferenciaOut(ResultadoInferenciaIn):
@@ -55,6 +56,7 @@ class AtendimentoCreate(BaseModel):
     data_hora: datetime
     relato_texto: str | None = None
     sintomas: list[str] = Field(default_factory=list, max_length=30)
+    dias_sintomas: int | None = Field(default=None, ge=0, le=30)  # há quantos dias começaram os sintomas
     relato_voz_path: str | None = Field(default=None, max_length=255)
     imagem_exantema_path: str | None = Field(default=None, max_length=255)
 
@@ -88,6 +90,7 @@ class AtendimentoOut(BaseModel):
     data_hora: datetime
     relato_texto: str | None = None
     sintomas: list[str] = Field(default_factory=list)
+    dias_sintomas: int | None = None
     relato_voz_path: str | None = None
     imagem_exantema_path: str | None = None
     latitude: float

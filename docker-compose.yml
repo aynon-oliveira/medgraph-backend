@@ -28,7 +28,10 @@ services:
       - neo4jdata:/data
 
   api:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALAR_WHISPER: ${INSTALAR_WHISPER:-1}
     container_name: medgraph_api
     restart: on-failure
     env_file: .env
@@ -46,9 +49,11 @@ services:
       - ./app:/code/app   # recarrega a API ao salvar o código
       - ./tests:/code/tests
       - uploads:/code/uploads   # áudios e fotos dos atendimentos (dados de saúde)
+      - whisper_cache:/root/.cache/huggingface   # modelo do Whisper (baixa uma vez)
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   pgdata:
   neo4jdata:
   uploads:
+  whisper_cache:

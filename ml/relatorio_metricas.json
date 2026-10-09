@@ -1,0 +1,225 @@
+{
+  "gerado_em": "2026-10-09T14:02:06+00:00",
+  "dados": {
+    "fonte": "SINAN - Notificacoes de dengue (dados abertos do Ministerio da Saude)",
+    "arquivo": "DENGBR23.csv",
+    "sha256": "ab350800e8f4109da8f2ce22ee2b334a93f3e647dec977f34c7af0c8b70cda08",
+    "linhas_lidas": 1645956,
+    "casos_usados": 1426773,
+    "positivos": 25354,
+    "negativos": 1401419,
+    "treino": 998741,
+    "validacao": 214016,
+    "teste": 214016,
+    "divisao": "temporal"
+  },
+  "alvo": "evolucao com sinais de alarme ou dengue grave (CLASSI_FIN 11/12) x dengue sem sinais de alarme (CLASSI_FIN 10), entre casos provaveis de dengue notificados - todos os criterios",
+  "sintetico": false,
+  "titulo": "classificador de risco de gravidade na dengue",
+  "taxa_base": 0.01777,
+  "resultados_teste": {
+    "regressao_logistica": {
+      "limiar": 0.0109,
+      "acuracia": 0.4281,
+      "precisao": 0.0331,
+      "sensibilidade": 0.7978,
+      "especificidade": 0.4188,
+      "f1": 0.0635,
+      "roc_auc": 0.6782,
+      "pr_auc": 0.0564,
+      "brier": 0.0235,
+      "matriz_confusao": {
+        "vn": 87460,
+        "fp": 121353,
+        "fn": 1052,
+        "vp": 4151
+      },
+      "roc_auc_ic95": [
+        0.6703,
+        0.6859
+      ],
+      "f1_ic95": [
+        0.0616,
+        0.0654
+      ]
+    },
+    "arvores_gradient_boosting_referencia": {
+      "limiar": 0.05,
+      "acuracia": 0.9435,
+      "precisao": 0.1002,
+      "sensibilidade": 0.1661,
+      "especificidade": 0.9628,
+      "f1": 0.125,
+      "roc_auc": 0.7032,
+      "pr_auc": 0.0662,
+      "brier": 0.0234,
+      "matriz_confusao": {
+        "vn": 201055,
+        "fp": 7758,
+        "fn": 4339,
+        "vp": 864
+      }
+    },
+    "baseline_taxa_de_dengue": {
+      "roc_auc": 0.5,
+      "acuracia_se_sempre_positivo": 0.0243,
+      "acuracia_se_sempre_negativo": 0.9757
+    },
+    "calibracao_teste": [
+      {
+        "faixa": "0.002-0.006",
+        "n": 21402,
+        "previsto": 0.0053,
+        "observado": 0.0095
+      },
+      {
+        "faixa": "0.006-0.008",
+        "n": 21402,
+        "previsto": 0.0072,
+        "observado": 0.0112
+      },
+      {
+        "faixa": "0.008-0.009",
+        "n": 21402,
+        "previsto": 0.0085,
+        "observado": 0.0115
+      },
+      {
+        "faixa": "0.009-0.011",
+        "n": 21402,
+        "previsto": 0.0099,
+        "observado": 0.0149
+      },
+      {
+        "faixa": "0.011-0.012",
+        "n": 21402,
+        "previsto": 0.0115,
+        "observado": 0.017
+      },
+      {
+        "faixa": "0.012-0.015",
+        "n": 21402,
+        "previsto": 0.0135,
+        "observado": 0.0199
+      },
+      {
+        "faixa": "0.015-0.018",
+        "n": 21401,
+        "previsto": 0.0161,
+        "observado": 0.0236
+      },
+      {
+        "faixa": "0.018-0.022",
+        "n": 21401,
+        "previsto": 0.0198,
+        "observado": 0.0304
+      },
+      {
+        "faixa": "0.022-0.031",
+        "n": 21401,
+        "previsto": 0.0261,
+        "observado": 0.0375
+      },
+      {
+        "faixa": "0.031-0.531",
+        "n": 21401,
+        "previsto": 0.0501,
+        "observado": 0.0677
+      }
+    ]
+  },
+  "razoes_de_chances": [
+    {
+      "variavel": "Hipertensão arterial",
+      "razao_de_chances": 1.967
+    },
+    {
+      "variavel": "Petéquias",
+      "razao_de_chances": 1.766
+    },
+    {
+      "variavel": "Vômito",
+      "razao_de_chances": 1.737
+    },
+    {
+      "variavel": "Diabetes",
+      "razao_de_chances": 1.476
+    },
+    {
+      "variavel": "Dias desde o início dos sintomas",
+      "razao_de_chances": 1.373
+    },
+    {
+      "variavel": "Náusea",
+      "razao_de_chances": 1.339
+    },
+    {
+      "variavel": "Dor intensa nas articulações",
+      "razao_de_chances": 1.246
+    },
+    {
+      "variavel": "Manchas na pele (exantema)",
+      "razao_de_chances": 1.211
+    },
+    {
+      "variavel": "Doença renal crônica",
+      "razao_de_chances": 1.202
+    },
+    {
+      "variavel": "Febre",
+      "razao_de_chances": 1.159
+    },
+    {
+      "variavel": "Idade (anos)",
+      "razao_de_chances": 1.134
+    },
+    {
+      "variavel": "Doença autoimune",
+      "razao_de_chances": 1.132
+    },
+    {
+      "variavel": "Gestante",
+      "razao_de_chances": 1.112
+    },
+    {
+      "variavel": "Doença hematológica",
+      "razao_de_chances": 1.082
+    },
+    {
+      "variavel": "Hepatopatia",
+      "razao_de_chances": 1.051
+    },
+    {
+      "variavel": "Dor muscular",
+      "razao_de_chances": 1.042
+    },
+    {
+      "variavel": "Conjuntivite",
+      "razao_de_chances": 1.039
+    },
+    {
+      "variavel": "Dor atrás dos olhos",
+      "razao_de_chances": 1.02
+    },
+    {
+      "variavel": "Doença ácido-péptica",
+      "razao_de_chances": 0.946
+    },
+    {
+      "variavel": "Sexo feminino",
+      "razao_de_chances": 0.905
+    },
+    {
+      "variavel": "Artrite",
+      "razao_de_chances": 0.653
+    },
+    {
+      "variavel": "Dor de cabeça",
+      "razao_de_chances": 0.641
+    },
+    {
+      "variavel": "Dor nas costas",
+      "razao_de_chances": 0.64
+    }
+  ]
+}

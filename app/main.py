@@ -8,7 +8,7 @@ import app.models  # noqa: F401  (registra as tabelas)
 from app.core.config import exigir_config_segura, settings
 from app.core.database import Base, engine
 from app.core.neo4j_client import fechar_driver
-from app.routers import atendimentos, auditoria, auth, grafo, health, mapa, midia, projecao, sincronizacao, usuarios, validacoes
+from app.routers import assistente, atendimentos, auditoria, auth, grafo, health, ia, mapa, midia, projecao, sincronizacao, transcricao, usuarios, validacoes
 from app.services.neo4j_service import garantir_esquema
 
 
@@ -31,6 +31,13 @@ async def lifespan(_: FastAPI):
 
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS senha_alterada_em TIMESTAMPTZ"))
+
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE atendimentos ADD COLUMN IF NOT EXISTS transcricao_audio TEXT"))
+        conn.execute(text("ALTER TABLE resultados_inferencia ADD COLUMN IF NOT EXISTS modelo_versao VARCHAR(60)"))
+
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE atendimentos ADD COLUMN IF NOT EXISTS dias_sintomas INTEGER"))
 
     # 3) Restrições de unicidade do grafo. Se o Neo4j não responder, a API sobe mesmo assim.
     garantir_esquema()
@@ -59,7 +66,7 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "ngrok-skip-browser-warning"],
     max_age=600,
 )
 
@@ -73,4 +80,7 @@ app.include_router(sincronizacao.router)
 app.include_router(grafo.router)
 app.include_router(mapa.router)
 app.include_router(projecao.router)
+app.include_router(ia.router)
+app.include_router(transcricao.router)
+app.include_router(assistente.router)
 app.include_router(health.router)

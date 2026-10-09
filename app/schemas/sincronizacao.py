@@ -25,6 +25,7 @@ class AtendimentoSync(BaseModel):
 
     relato_texto: str | None = None
     sintomas: list[str] = Field(default_factory=list, max_length=30)
+    dias_sintomas: int | None = Field(default=None, ge=0, le=30)  # há quantos dias começaram os sintomas
     relato_voz_path: str | None = Field(default=None, max_length=255)
     imagem_exantema_path: str | None = Field(default=None, max_length=255)
 

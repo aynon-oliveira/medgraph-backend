@@ -83,27 +83,70 @@ Dizer '     API, PostgreSQL, PostGIS e Neo4j: ok.' 'Green'
 # 3) Tunel
 Dizer ''
 Dizer '4/4  Ligando o tunel...'
-$cmd = Get-Command cloudflared -ErrorAction SilentlyContinue
-if (-not $cmd) { Parar 'O cloudflared nao foi encontrado neste computador (comando "cloudflared").' }
 Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process ngrok -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
-$log = Join-Path $env:TEMP 'medgraph_tunel.log'
-Remove-Item $log -ErrorAction SilentlyContinue
-Start-Process -FilePath $cmd.Source -ArgumentList @('tunnel', '--url', 'http://127.0.0.1:8000', '--logfile', $log) -WindowStyle Minimized
-
+# Endereco FIXO: se existir o arquivo tunel.txt (uma linha com o dominio do ngrok, ex.: algo.ngrok-free.app),
+# usa o ngrok e o endereco nunca muda. Sem o arquivo, usa o cloudflared (endereco novo a cada dia).
+$arquivoDominio = Join-Path $PSScriptRoot 'tunel.txt'
+$dominio = $null
+if (Test-Path $arquivoDominio) {
+    $dominio = ((Get-Content $arquivoDominio -TotalCount 1) -replace '^\s*https?://', '' -replace '[/\s]+$', '').Trim()
+}
 $url = $null
-for ($i = 0; $i -lt 40 -and -not $url; $i++) {
-    Start-Sleep -Seconds 2
-    if (Test-Path $log) {
-        $linhas = Select-String -Path $log -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' -AllMatches -ErrorAction SilentlyContinue
-        foreach ($linha in $linhas) {
-            foreach ($achado in $linha.Matches) {
-                if (-not $url -and $achado.Value -notmatch '//api\.') { $url = $achado.Value }
+if ($dominio) {
+    $ng = Get-Command ngrok -ErrorAction SilentlyContinue
+    if (-not $ng) { Parar 'O tunel.txt existe, mas o ngrok nao foi encontrado (comando "ngrok"). Instale o ngrok e rode "ngrok config add-authtoken SEU_TOKEN" uma vez.' }
+    # versoes novas do ngrok usam --url; as antigas usam --domain (ele mesmo diz qual aceita)
+    $ajuda = (& $ng.Source http --help 2>&1 | Out-String)
+    $flagDominio = '--domain='
+    if ($ajuda -match '--url\b') { $flagDominio = '--url=' }
+    $saidaNgrok = Join-Path $env:TEMP 'medgraph_ngrok_saida.log'
+    $erroNgrok = Join-Path $env:TEMP 'medgraph_ngrok_erro.log'
+    Remove-Item $saidaNgrok, $erroNgrok -ErrorAction SilentlyContinue
+    $tentativa = 0
+    $ngrokVivo = $false
+    $codigoSaida = $null
+    while ($tentativa -lt 3 -and -not $ngrokVivo) {
+        $tentativa++
+        $proc = Start-Process -FilePath $ng.Source -ArgumentList @('http', ($flagDominio + $dominio), '8000', '--log=stdout', '--log-format=logfmt') -RedirectStandardOutput $saidaNgrok -RedirectStandardError $erroNgrok -WindowStyle Hidden -PassThru
+        Start-Sleep -Seconds 8
+        $ngrokVivo = (-not $proc.HasExited)
+        if (-not $ngrokVivo) { $codigoSaida = $proc.ExitCode }
+        if (-not $ngrokVivo -and $tentativa -lt 3) {
+            Dizer '     O ngrok nao subiu (a sessao anterior pode ainda estar encerrando la). Tentando de novo em 20 segundos...' 'Yellow'
+            Start-Sleep -Seconds 20
+        }
+    }
+    $url = 'https://' + $dominio
+    if (-not $ngrokVivo) {
+        Dizer ''
+        Dizer ('     Motivo informado pelo ngrok (codigo de saida: ' + $codigoSaida + '):') 'Yellow'
+        Dizer ('     Programa: ' + $ng.Source + '   Comando: ngrok http ' + $flagDominio + $dominio + ' 8000') 'Gray'
+        foreach ($arq in @($erroNgrok, $saidaNgrok)) {
+            if ((Test-Path $arq) -and ((Get-Item $arq).Length -gt 0)) { Get-Content $arq -Tail 12 | ForEach-Object { Dizer ('       ' + $_) 'Gray' } }
+        }
+        Parar 'O ngrok nao ficou ligado. Me mande uma foto das linhas acima. Se falar de "already online" (ERR_NGROK_334), espere 2 minutos e rode o ligar.bat de novo.'
+    }
+} else {
+    $cmd = Get-Command cloudflared -ErrorAction SilentlyContinue
+    if (-not $cmd) { Parar 'O cloudflared nao foi encontrado neste computador (comando "cloudflared").' }
+    $log = Join-Path $env:TEMP 'medgraph_tunel.log'
+    Remove-Item $log -ErrorAction SilentlyContinue
+    Start-Process -FilePath $cmd.Source -ArgumentList @('tunnel', '--url', 'http://127.0.0.1:8000', '--logfile', $log) -WindowStyle Minimized
+    for ($i = 0; $i -lt 40 -and -not $url; $i++) {
+        Start-Sleep -Seconds 2
+        if (Test-Path $log) {
+            $linhas = Select-String -Path $log -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' -AllMatches -ErrorAction SilentlyContinue
+            foreach ($linha in $linhas) {
+                foreach ($achado in $linha.Matches) {
+                    if (-not $url -and $achado.Value -notmatch '//api\.') { $url = $achado.Value }
+                }
             }
         }
     }
+    if (-not $url) { Parar 'Nao consegui descobrir o endereco do tunel. Abra a janela minimizada do cloudflared (barra de tarefas) e procure o endereco .trycloudflare.com.' }
 }
-if (-not $url) { Parar 'Nao consegui descobrir o endereco do tunel. Abra a janela minimizada do cloudflared (barra de tarefas) e procure o endereco .trycloudflare.com.' }
 
 Dizer '     Testando o tunel (pode levar ate 1 minuto para o endereco "pegar")...'
 $tunelOk = EsperarApi $url 12
@@ -118,11 +161,11 @@ Dizer ' PRONTO. Endereco do servidor de hoje (ja copiado):' 'Cyan'
 Dizer ''
 Dizer ('   ' + $url) 'Green'
 Dizer ''
-Dizer ' No site: caixa "Servidor" > cole o endereco > "Usar este servidor".' 'White'
-Dizer ' Deixe o tunel aberto (janela minimizada do cloudflared) e nao deixe' 'White'
+if ($dominio) { Dizer ' Endereco FIXO: configure uma vez em cada aparelho (caixa "Servidor") e pronto.' 'White' } else { Dizer ' No site: caixa "Servidor" > cole o endereco > "Usar este servidor".' 'White' }
+Dizer ' Deixe o tunel aberto (janela minimizada do tunel) e nao deixe' 'White'
 Dizer ' o computador entrar em suspensao.' 'White'
 Dizer '==============================================================' 'Cyan'
 
-try { Start-Process 'https://medgraph-am.netlify.app' } catch { }
+try { Start-Process 'https://medgraph-am.pages.dev' } catch { }
 Dizer ''
 Read-Host 'Pode fechar esta janela com Enter (o tunel continua aberto na outra)'

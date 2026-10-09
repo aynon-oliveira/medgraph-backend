@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from geoalchemy2 import Geography
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, Text
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,7 +33,10 @@ class Atendimento(Base):
     relato_texto: Mapped[str | None] = mapped_column(Text, nullable=True)       # transcrição do áudio
     # Sintomas extraídos do relato pelo app (viram nós NoSintoma no grafo, RF09)
     sintomas: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
+    # Há quantos dias começaram os sintomas (0 a 30; opcional). Entra no modelo de risco.
+    dias_sintomas: Mapped[int | None] = mapped_column(Integer, nullable=True)
     relato_voz_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    transcricao_audio: Mapped[str | None] = mapped_column(Text, nullable=True)  # rascunho do Whisper
     imagem_exantema_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # RN05: geolocalização obrigatória (nullable=False garante isso no banco)
