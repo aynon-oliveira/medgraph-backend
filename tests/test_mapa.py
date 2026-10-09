@@ -24,6 +24,7 @@ SUF = uuid.uuid4().hex[:8]
 MUN = f"TesteMapa{SUF}"
 LAT, LON = -3.1234567, -60.0234567  # as coordenadas saem arredondadas em 3 casas
 LAT_ARRED, LON_ARRED = -3.123, -60.023
+LAT_APROX, LON_APROX = -3.12, -60.02  # localidade com menos de 3 casos (passo 29)
 _PACIENTES: list[str] = []
 
 
@@ -151,7 +152,8 @@ def test_gestor_e_medico_veem_os_atendimentos_em_geojson(client, dados, gestor, 
 def test_privacidade_sem_paciente_e_com_coordenadas_arredondadas(client, dados, gestor):
     r = client.get("/api/v1/mapa/atendimentos?limit=5000", headers=gestor)
     feature = next(f for f in r.json()["features"] if f["properties"]["atendimento_id"] == dados["a"])
-    assert feature["geometry"]["coordinates"] == [LON_ARRED, LAT_ARRED]
+    assert feature["geometry"]["coordinates"] == [LON_APROX, LAT_APROX]  # Centro tem 2 casos (< 3)
+    assert feature["properties"]["localizacao_aproximada"] is True
     propriedades = feature["properties"]
     assert "paciente_id" not in propriedades and "nome" not in propriedades
     assert propriedades["nivel_risco"] == "ALTO"
@@ -207,7 +209,7 @@ def test_densidade_por_localidade_conta_casos_e_focos(client, dados, gestor, med
     assert centro["proporcao_alto_risco"] == 0.5
     assert centro["focos"] == 0
     assert _localidade(r, f"Cidade Nova, {MUN}")["properties"]["total_atendimentos"] == 1
-    assert _localidade(r, f"Centro, {MUN}")["geometry"]["coordinates"] == [LON_ARRED, LAT_ARRED]
+    assert _localidade(r, f"Centro, {MUN}")["geometry"]["coordinates"] == [LON_APROX, LAT_APROX]
 
     foco = {
         "tipo_criadouro": f"teste-foco-{SUF}",
@@ -234,3 +236,31 @@ def test_densidade_funciona_mesmo_com_o_neo4j_fora_do_ar(client, dados, gestor, 
     assert r.status_code == 200
     assert r.json()["grafo_disponivel"] is False
     assert _localidade(r, f"Centro, {MUN}")["properties"]["focos"] is None
+
+
+# ------------------------------------------------------------------ passo 29: localizacao aproximada
+
+
+def test_localidade_com_poucos_casos_e_marcada_como_aproximada(client, dados, gestor):
+    r = client.get("/api/v1/mapa/atendimentos?limit=5000", headers=gestor)
+    ponto = next(f for f in r.json()["features"] if f["properties"]["atendimento_id"] == dados["c"])
+    assert ponto["properties"]["localizacao_aproximada"] is True
+    d = client.get("/api/v1/mapa/densidade", headers=gestor)
+    assert _localidade(d, f"Cidade Nova, {MUN}")["properties"]["localizacao_aproximada"] is True
+
+
+def test_localidade_com_3_casos_mantem_a_precisao_normal(client, acs, gestor):
+    bairro = f"Grande{SUF}"
+    ids = []
+    for _ in range(3):
+        r = client.post("/atendimentos", headers=acs, json=_payload(bairro=bairro))
+        assert r.status_code == 201
+        _PACIENTES.append(r.json()["paciente"]["id"])
+        ids.append(r.json()["id"])
+    r = client.get("/api/v1/mapa/atendimentos?limit=5000", headers=gestor)
+    ponto = next(f for f in r.json()["features"] if f["properties"]["atendimento_id"] == ids[0])
+    assert ponto["geometry"]["coordinates"] == [LON_ARRED, LAT_ARRED]
+    assert ponto["properties"]["localizacao_aproximada"] is False
+    # filtrar por risco nao muda a regra: ela vale para a localidade inteira
+    so_alto = client.get("/api/v1/mapa/atendimentos?nivel_risco=ALTO&limit=5000", headers=gestor)
+    assert ids[0] not in _ids(so_alto)

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import require_perfil
 from app.models import NivelRisco, Perfil, Usuario
-from app.services import neo4j_service
+from app.services import neo4j_service, privacidade
 
 logger = logging.getLogger("medgraph.mapa")
 
@@ -37,19 +37,25 @@ def mapa_de_atendimentos(
 
     Filtros: nivel_risco, desde, ate (datas ISO com fuso, ex.: 2026-10-01T00:00:00-04:00) e limit.
     """
+    # casos_localidade conta TODOS os casos da localidade (antes dos filtros), para que filtrar por risco
+    # ou por data nao faca uma localidade grande parecer pequena (nem o contrario).
     consulta = text(
         """
-        SELECT id,
-               nivel_risco::text AS nivel_risco,
-               status_validacao::text AS status_validacao,
-               data_hora,
-               municipio,
-               bairro,
-               ST_X(localizacao::geometry) AS longitude,
-               ST_Y(localizacao::geometry) AS latitude
-        FROM atendimentos
-        WHERE localizacao IS NOT NULL
-          AND (CAST(:nivel AS text) IS NULL OR nivel_risco::text = CAST(:nivel AS text))
+        WITH base AS (
+            SELECT id,
+                   nivel_risco::text AS nivel_risco,
+                   status_validacao::text AS status_validacao,
+                   data_hora,
+                   municipio,
+                   bairro,
+                   ST_X(localizacao::geometry) AS longitude,
+                   ST_Y(localizacao::geometry) AS latitude,
+                   count(*) OVER (PARTITION BY municipio, bairro) AS casos_localidade
+            FROM atendimentos
+            WHERE localizacao IS NOT NULL
+        )
+        SELECT * FROM base
+        WHERE (CAST(:nivel AS text) IS NULL OR nivel_risco = CAST(:nivel AS text))
           AND (CAST(:desde AS timestamptz) IS NULL OR data_hora >= CAST(:desde AS timestamptz))
           AND (CAST(:ate AS timestamptz) IS NULL OR data_hora <= CAST(:ate AS timestamptz))
         ORDER BY data_hora DESC
@@ -66,24 +72,24 @@ def mapa_de_atendimentos(
         },
     ).all()
 
-    features = [
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [round(l.longitude, CASAS_DECIMAIS), round(l.latitude, CASAS_DECIMAIS)],
-            },
-            "properties": {
-                "atendimento_id": str(l.id),
-                "nivel_risco": l.nivel_risco,
-                "status_validacao": l.status_validacao,
-                "data_hora": l.data_hora.isoformat() if l.data_hora else None,
-                "municipio": l.municipio,
-                "bairro": l.bairro,
-            },
-        }
-        for l in linhas
-    ]
+    features = []
+    for l in linhas:
+        lon, lat, aproximado = privacidade.arredondar_coordenadas(l.longitude, l.latitude, l.casos_localidade)
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                "properties": {
+                    "atendimento_id": str(l.id),
+                    "nivel_risco": l.nivel_risco,
+                    "status_validacao": l.status_validacao,
+                    "data_hora": l.data_hora.isoformat() if l.data_hora else None,
+                    "municipio": l.municipio,
+                    "bairro": l.bairro,
+                    "localizacao_aproximada": aproximado,  # poucos casos na localidade: ponto menos preciso
+                },
+            }
+        )
     return {"type": "FeatureCollection", "features": features}
 
 
@@ -144,15 +150,13 @@ def densidade_por_localidade(
     features = []
     for chave, g in sorted(grupos.items(), key=lambda item: item[1]["total"], reverse=True):
         total = g["total"]
+        lon, lat, aproximado = privacidade.arredondar_coordenadas(g["soma_lon"] / total, g["soma_lat"] / total, total)
         features.append(
             {
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [
-                        round(g["soma_lon"] / total, CASAS_DECIMAIS),
-                        round(g["soma_lat"] / total, CASAS_DECIMAIS),
-                    ],
+                    "coordinates": [lon, lat],
                 },
                 "properties": {
                     "localidade": g["localidade"]["nome"],
@@ -160,6 +164,7 @@ def densidade_por_localidade(
                     "total_atendimentos": total,
                     "alto_risco": g["alto"],
                     "proporcao_alto_risco": round(g["alto"] / total, 3),
+                    "localizacao_aproximada": aproximado,
                     "focos": (focos.get(chave, 0) if focos is not None else None),
                 },
             }

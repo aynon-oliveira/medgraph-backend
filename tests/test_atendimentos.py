@@ -187,3 +187,32 @@ def test_filtro_por_nivel_de_risco(client, acs1):
     assert r.status_code == 200
     assert alto["id"] in {a["id"] for a in r.json()}
     assert all(a["nivel_risco"] == "ALTO" for a in r.json())
+
+
+def test_gestor_ve_o_atendimento_sem_identificar_o_paciente(client, acs1, gestor):
+    """Passo 29 (LGPD): o Gestor trabalha com dados agregados; o ACS continua vendo a ficha completa."""
+    nome = f"Paciente Teste {uuid.uuid4().hex[:6]}"
+    criado = client.post(
+        "/atendimentos",
+        headers=acs1,
+        json=_payload(
+            paciente={"nome": nome, "sexo": "F", "data_nascimento": "1990-05-17"},
+            rua="Rua das Flores, 123",
+            latitude=-3.1234567,
+            longitude=-60.0234567,
+        ),
+    ).json()
+
+    do_acs = client.get(f"/atendimentos/{criado['id']}", headers=acs1).json()
+    assert do_acs["paciente"]["nome"] == nome and do_acs["rua"] == "Rua das Flores, 123"
+
+    g = client.get(f"/atendimentos/{criado['id']}", headers=gestor).json()
+    assert g["paciente"]["nome"] != nome and g["paciente"]["nome"].startswith("Paciente ")
+    assert g["paciente"]["data_nascimento"] is None
+    assert g["relato_texto"] is None and g["rua"] is None
+    assert (g["longitude"], g["latitude"]) == (-60.02, -3.12)
+    assert g["sintomas"] == do_acs["sintomas"] and g["nivel_risco"] == do_acs["nivel_risco"]
+
+    lista = client.get("/atendimentos?limit=200", headers=gestor)
+    assert lista.status_code == 200
+    assert nome not in lista.text and "Rua das Flores" not in lista.text

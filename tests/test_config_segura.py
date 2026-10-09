@@ -81,5 +81,6 @@ def test_nomes_de_producao_sao_reconhecidos(valor):
     assert _cfg(AMBIENTE=valor).em_producao is True
 
 
-def test_padrao_e_desenvolvimento():
+def test_padrao_e_desenvolvimento(monkeypatch):
+    monkeypatch.delenv("AMBIENTE", raising=False)  # o container real roda com AMBIENTE=producao
     assert Settings(_env_file=None).em_producao is False

@@ -17,7 +17,7 @@ from app.models import (
     StatusValidacao,
     Usuario,
 )
-from app.services import auditoria_service
+from app.services import auditoria_service, privacidade
 from app.services.neo4j_service import projetar_em_segundo_plano
 from app.schemas.atendimento import (
     AtendimentoCreate,
@@ -140,7 +140,9 @@ def listar_atendimentos(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ):
-    """Lista atendimentos. O ACS vê só os seus; Médico e Gestor veem todos."""
+    """Lista atendimentos. O ACS vê só os seus; Médico e Gestor veem todos.
+
+    O Gestor recebe a versão sem identificação do paciente (LGPD: ele trabalha com dados agregados)."""
     consulta = select(Atendimento).options(
         selectinload(Atendimento.paciente), selectinload(Atendimento.resultado)
     )
@@ -153,6 +155,8 @@ def listar_atendimentos(
 
     consulta = consulta.order_by(Atendimento.data_hora.desc(), Atendimento.id).limit(limit).offset(offset)  # id desempata: paginação estável
     saida = [_para_saida(a) for a in db.scalars(consulta).all()]
+    if usuario.perfil == Perfil.GESTOR:
+        saida = [privacidade.anonimizar_para_gestor(s) for s in saida]
     auditoria_service.registrar_acesso(
         db, usuario, auditoria_service.LISTAR_ATENDIMENTOS, "atendimento", request=request, detalhe=f"{len(saida)} registros"
     )
@@ -171,6 +175,8 @@ def obter_atendimento(
     if atendimento is None or (usuario.perfil == Perfil.ACS and atendimento.agente_id != usuario.id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Atendimento não encontrado.")
     saida = _para_saida(atendimento)
+    if usuario.perfil == Perfil.GESTOR:
+        saida = privacidade.anonimizar_para_gestor(saida)
     auditoria_service.registrar_acesso(
         db, usuario, auditoria_service.LER_ATENDIMENTO, "atendimento", atendimento_id, request
     )
