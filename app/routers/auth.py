@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_user_optional
+from app.core.limitador import limitador_login
 from app.core.security import criar_token, hash_senha, verificar_senha
 from app.models import Perfil, Usuario
 from app.schemas.usuario import MensagemOut, Token, TrocarSenhaIn, UsuarioCreate, UsuarioOut, problemas_da_senha
@@ -70,17 +71,28 @@ def registrar(
 @router.post("/login", response_model=Token)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Login. No campo `username` vai o e-mail. Devolve o token JWT."""
+    chave = limitador_login.chave(form.username)
+    espera = limitador_login.segundos_bloqueado(chave)
+    if espera > 0:
+        minutos = max(1, (espera + 59) // 60)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Muitas tentativas de entrada. Tente de novo em {minutos} minuto(s).",
+            headers={"Retry-After": str(espera)},
+        )
     usuario = db.scalar(select(Usuario).where(Usuario.email == form.username.strip().lower()))
     if (
         usuario is None
         or not usuario.ativo
         or not verificar_senha(form.password, usuario.senha_hash)
     ):
+        limitador_login.registrar_falha(chave)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="E-mail ou senha incorretos.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    limitador_login.registrar_sucesso(chave)
     return Token(access_token=criar_token(usuario.id, usuario.perfil), perfil=usuario.perfil)
 
 

@@ -79,6 +79,10 @@ if (-not $apiOk) {
     Parar 'A API nao ficou saudavel. Me mande uma foto das linhas acima.'
 }
 Dizer '     API, PostgreSQL, PostGIS e Neo4j: ok.' 'Green'
+$arqEnv = Join-Path $PSScriptRoot '.env'
+if ((Test-Path $arqEnv) -and -not (Select-String -Path $arqEnv -Pattern '^\s*AMBIENTE\s*=\s*producao' -Quiet)) {
+    Dizer '     ATENCAO: modo desenvolvimento (a pagina /docs fica aberta no endereco publico). Veja o LEIA-ME do passo 28.' 'Yellow'
+}
 
 # 3) Tunel
 Dizer ''

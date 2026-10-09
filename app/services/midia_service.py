@@ -14,6 +14,7 @@ from pathlib import Path
 from fastapi import HTTPException, UploadFile, status
 
 from app.core.config import settings
+from app.services.imagem_limpa import remover_metadados
 
 TAMANHO_PEDACO = 64 * 1024
 
@@ -61,6 +62,17 @@ def detectar_tipo(categoria: str, inicio: bytes) -> tuple[str, str] | None:
     return DETECTORES[categoria](inicio)
 
 
+def limpar_metadados_do_arquivo(destino: Path) -> None:
+    """Regrava a foto sem EXIF/XMP/comentários (os pixels não mudam). Se algo falhar, o upload segue."""
+    try:
+        original = destino.read_bytes()
+        limpo = remover_metadados(original)
+        if limpo != original:
+            destino.write_bytes(limpo)
+    except OSError:
+        pass
+
+
 def salvar(categoria: str, atendimento_id: uuid.UUID, arquivo: UploadFile) -> str:
     """Grava o arquivo e devolve o caminho RELATIVO (é o que vai para o banco)."""
     limite = LIMITES_MB[categoria]() * 1024 * 1024
@@ -95,6 +107,8 @@ def salvar(categoria: str, atendimento_id: uuid.UUID, arquivo: UploadFile) -> st
     except Exception:
         destino.unlink(missing_ok=True)  # não deixa arquivo pela metade
         raise
+    if categoria == "foto":
+        limpar_metadados_do_arquivo(destino)  # passo 28: tira GPS, modelo do celular e data da foto
     return destino_rel
 
 

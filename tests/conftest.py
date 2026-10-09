@@ -32,3 +32,12 @@ def limpar_grafo_de_testes():
         logger.warning("Não foi possível limpar o grafo após os testes.", exc_info=True)
     finally:
         fechar_driver()
+
+
+@pytest.fixture(autouse=True)
+def _zerar_limitador_de_login():
+    """Passo 28: o limite de tentativas de login não pode vazar de um teste para outro."""
+    from app.core.limitador import limitador_login
+
+    limitador_login.zerar()
+    yield

@@ -6,475 +6,713 @@
 <title>MEDGRAPH-AM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#1351B4">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
-   MEDGRAPH-AM — Plataforma integrada
+   MEDGRAPH-AM — visual claro, calmo e acessível
    Triagem em campo (ACS) · Validação Médica · Vigilância (Gestor)
    ========================================================= */
 
 :root{
-  --rio-950:#0B2B2E;
-  --rio-800:#123A3D;
-  --rio-700:#1E5F63;
-  --rio-600:#2A7377;
-  --mata-500:#3E8E63;
-  --mata-600:#2F7350;
-  --barro-500:#C97D4B;
-  --barro-600:#AD6539;
-  --alerta-500:#D6483C;
-  --alerta-700:#9C2E25;
-  --aviso-500:#E8A33D;
-  --aviso-700:#8A5D1C;
-  --areia-50:#F6F3EC;
-  --areia-100:#EDE7D8;
-  --areia-200:#E1D8C2;
-  --noite-900:#16231F;
-  --noite-700:#3B4A44;
+  /* paleta */
+  --azul-900:#071D41;
+  --azul-800:#0C326F;
+  --azul-700:#1351B4;
+  --azul-600:#2670E8;
+  --azul-200:#C5D4EB;
+  --azul-100:#DCE7F7;
+  --azul-50:#F0F5FD;
+  --verde-600:#0F6618;
+  --verde-500:#168821;
+  --verde-50:#E8F5EA;
+  --vermelho-700:#A51600;
+  --vermelho-500:#D9200A;
+  --vermelho-50:#FDEEEC;
+  --amarelo-500:#FFCD07;
+  --amarelo-700:#5C4900;
+  --amarelo-50:#FFF8DB;
+  --fundo:#F4F8FE;
+  --superficie:#FFFFFF;
+  --texto:#1B2433;
+  --texto-suave:#4A5568;
+  --linha:#D8DFEA;
+
+  /* nomes antigos (o resto do código ainda os usa) */
+  --rio-950:var(--azul-900); --rio-800:var(--azul-800); --rio-700:var(--azul-700); --rio-600:var(--azul-600);
+  --mata-500:var(--verde-500); --mata-600:var(--verde-600);
+  --barro-500:var(--azul-700); --barro-600:var(--azul-800);
+  --alerta-500:var(--vermelho-500); --alerta-700:var(--vermelho-700);
+  --aviso-500:var(--amarelo-500); --aviso-700:var(--amarelo-700);
+  --areia-50:var(--fundo); --areia-100:var(--azul-50); --areia-200:var(--linha);
+  --noite-900:var(--texto); --noite-700:var(--texto-suave);
   --branco:#FFFFFF;
 
-  --fonte-titulo:'Zilla Slab', Georgia, serif;
+  --fonte-titulo:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --fonte-corpo:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --raio:6px;
-  --borda:1px solid var(--areia-200);
+  --raio:12px;
+  --raio-grande:18px;
+  --borda:1px solid var(--linha);
+  --sombra:0 1px 2px rgba(7,29,65,.05), 0 8px 24px rgba(7,29,65,.07);
+  --sombra-forte:0 2px 4px rgba(7,29,65,.08), 0 14px 34px rgba(7,29,65,.14);
   --fs-base:16px;
   --fs-scale:1;
-  --foco-cor:#1657C9;
-}
-
-body.alto-contraste{
-  --rio-950:#000000; --rio-800:#000000; --rio-700:#000000; --rio-600:#000000;
-  --mata-500:#0A7A34; --mata-600:#065423;
-  --barro-500:#000000; --barro-600:#000000;
-  --alerta-500:#B10000; --alerta-700:#7A0000;
-  --aviso-500:#8A5D1C; --aviso-700:#5A3D00;
-  --areia-50:#FFFFFF; --areia-100:#FFFFFF; --areia-200:#000000;
-  --noite-900:#000000; --noite-700:#000000;
-  --foco-cor:#B10000;
+  --foco-cor:#0B3D91;
 }
 
 *{ box-sizing:border-box; }
-html{ font-size:var(--fs-base); }
+html{ font-size:var(--fs-base); scroll-behavior:smooth; }
 body{
   margin:0;
-  background:var(--areia-50);
-  color:var(--noite-900);
+  background:var(--fundo);
+  background-image:radial-gradient(900px 420px at 85% -120px, #DCE9FF 0%, rgba(220,233,255,0) 70%),
+                   radial-gradient(700px 360px at -10% -80px, #E3F4EA 0%, rgba(227,244,234,0) 70%);
+  background-repeat:no-repeat;
+  color:var(--texto);
   font-family:var(--fonte-corpo);
   font-size:calc(1rem * var(--fs-scale));
-  line-height:1.5;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
 }
-:focus-visible{ outline:3px solid var(--foco-cor); outline-offset:2px; }
+body.alto-contraste{ background-image:none; }
+:focus-visible{ outline:3px solid var(--foco-cor); outline-offset:2px; border-radius:6px; box-shadow:0 0 0 6px rgba(255,205,7,.75); }
 button, input, select, textarea{ font-family:inherit; }
-a{ color:inherit; }
+a{ color:var(--azul-700); }
 
 .pular-conteudo{
   position:absolute; left:-999px; top:auto;
-  background:var(--branco); color:var(--noite-900);
+  background:var(--branco); color:var(--texto);
   padding:.75rem 1rem; border-radius:var(--raio); z-index:999;
-  border:2px solid var(--rio-700);
+  border:2px solid var(--azul-700);
 }
 .pular-conteudo:focus{ left:1rem; top:1rem; }
-.regiao-viva{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
-.somente-leitor{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+.regiao-viva, .somente-leitor{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 [hidden]{ display:none !important; }
 
-/* ===================== TELA DE LOGIN ===================== */
+/* ---------- animação suave de entrada ---------- */
+@keyframes entrar{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+.painel, .etapa__corpo, .indicador, .ficha-caso, .login-cartao{ animation:entrar .45s ease both; }
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+
+/* ===================== BOTÕES ===================== */
+.btn-primario, .btn-secundario, .btn-sync-claro, .btn-gps, .btn-gravar, .btn-sair, .btn-mini{
+  font-family:inherit; cursor:pointer; line-height:1.2;
+  transition:background-color .18s ease, color .18s ease, transform .12s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.btn-primario{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  min-height:48px; padding:.7rem 1.7rem; border:2px solid var(--azul-700); border-radius:999px;
+  background:var(--azul-700); color:#fff; font-weight:600; font-size:1rem;
+  box-shadow:0 2px 6px rgba(19,81,180,.25);
+}
+.btn-primario:hover{ background:var(--azul-800); border-color:var(--azul-800); transform:translateY(-1px); box-shadow:0 6px 16px rgba(19,81,180,.30); }
+.btn-primario:active{ transform:translateY(0); box-shadow:none; }
+.btn-primario:disabled{ background:#E6EAF1; border-color:#E6EAF1; color:#6B7280; cursor:not-allowed; box-shadow:none; transform:none; }
+
+.btn-secundario, .btn-sync-claro{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  min-height:44px; padding:.55rem 1.3rem; border:2px solid var(--azul-700); border-radius:999px;
+  background:#fff; color:var(--azul-700); font-weight:600; font-size:.95rem;
+}
+.btn-secundario:hover, .btn-sync-claro:hover{ background:var(--azul-50); transform:translateY(-1px); }
+.btn-secundario:active, .btn-sync-claro:active{ transform:none; }
+.btn-secundario:disabled, .btn-sync-claro:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+.btn-sync-claro{ margin-bottom:.8rem; }
+
+.painel__acao{
+  font-size:.9rem; font-weight:600; color:var(--azul-700); background:none; border:none; cursor:pointer;
+  text-decoration:underline; text-underline-offset:3px; padding:.5rem .25rem; min-height:44px;
+}
+
+.btn-mini{
+  min-height:36px; background:#fff; border:2px solid var(--azul-700); color:var(--azul-700);
+  border-radius:999px; padding:.2rem .85rem; font-size:.82rem; font-weight:600; margin:.15rem .2rem .15rem 0;
+}
+.btn-mini:hover{ background:var(--azul-50); }
+.btn-mini--perigo{ border-color:var(--vermelho-700); color:var(--vermelho-700); }
+.btn-mini--perigo:hover{ background:var(--vermelho-50); }
+
+.btn-gps{
+  display:inline-flex; align-items:center; gap:.5rem; margin-top:.4rem; min-height:44px;
+  background:var(--azul-50); border:2px solid var(--azul-200); color:var(--azul-800);
+  border-radius:999px; padding:.5rem 1.1rem; font-weight:600; font-size:.92rem;
+}
+.btn-gps:hover{ background:var(--azul-100); }
+.gps-resultado{ margin:.5rem 0 0; font-size:.9rem; font-weight:500; color:var(--texto-suave); }
+
+/* ===================== LOGIN ===================== */
 .tela-login{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:2rem 1.25rem;
-  background:var(--rio-950);
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1.25rem;
+  background:
+    radial-gradient(520px 520px at 12% 18%, rgba(38,112,232,.16), transparent 70%),
+    radial-gradient(480px 480px at 88% 82%, rgba(22,136,33,.14), transparent 70%),
+    linear-gradient(180deg,#EEF4FF 0%,#F7FAFF 100%);
 }
 .login-cartao{
-  width:100%;
-  max-width:26rem;
-  background:var(--branco);
-  border-radius:var(--raio);
-  padding:2rem 1.75rem;
-  box-shadow:0 10px 30px rgba(0,0,0,.25);
+  width:100%; max-width:26rem; background:var(--superficie); border:var(--borda);
+  border-radius:var(--raio-grande); padding:2.2rem 1.9rem; box-shadow:var(--sombra-forte);
 }
-.login-titulo{ font-family:var(--fonte-titulo); font-size:1.4rem; color:var(--rio-950); margin:0 0 .35rem; }
-.login-descricao{ font-size:.9rem; color:var(--noite-700); margin:0 0 1.4rem; }
-.campo-perfil{ border:1.5px solid var(--areia-200); border-radius:var(--raio); padding:.9rem 1rem 1rem; margin:0 0 1.3rem; }
-.campo-perfil legend{ font-weight:600; font-size:.85rem; padding:0 .3rem; }
-.opcao-perfil{ display:flex; align-items:center; gap:.55rem; font-size:.92rem; padding:.35rem 0; cursor:pointer; }
+.login-titulo{ font-size:1.5rem; font-weight:700; color:var(--azul-900); margin:0 0 .35rem; }
+.login-descricao{ font-size:.95rem; color:var(--texto-suave); margin:0 0 1.4rem; }
 .login-aviso{
-  font-size:.85rem; font-weight:600; color:var(--aviso-700);
-  background:#FCF3E3; border:1px solid var(--aviso-500); border-radius:var(--raio);
+  font-size:.9rem; font-weight:600; color:var(--vermelho-700);
+  background:var(--vermelho-50); border:1px solid var(--vermelho-500); border-radius:var(--raio);
   padding:.7rem .9rem; margin:0 0 1.1rem;
 }
+.login-servidor{ margin:1rem 0 0; font-size:.88rem; color:var(--texto-suave); }
+.login-servidor summary{ cursor:pointer; font-weight:600; color:var(--azul-700); padding:.35rem 0; }
+.login-servidor__atual{ word-break:break-all; font-weight:600; color:var(--azul-700); }
 
 /* ===================== CABEÇALHO ===================== */
-.cabecalho{ background:var(--rio-950); color:var(--areia-50); border-bottom:4px solid var(--barro-500); }
+@media (min-width:700px){ .cabecalho{ position:sticky; top:0; z-index:50; } }
+.cabecalho{
+  z-index:50;
+  background:rgba(255,255,255,.84); -webkit-backdrop-filter:saturate(1.4) blur(14px); backdrop-filter:saturate(1.4) blur(14px);
+  border-bottom:1px solid var(--linha); color:var(--texto);
+}
 .cabecalho__barra{
-  max-width:1280px; margin:0 auto; padding:.85rem 1.25rem;
-  display:flex; align-items:center; gap:1.1rem; flex-wrap:wrap;
+  max-width:1200px; margin:0 auto; padding:.65rem 1.25rem;
+  display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
 }
 .marca{ display:flex; align-items:center; gap:.65rem; margin-right:auto; }
-.marca__texto{ display:flex; flex-direction:column; line-height:1.1; }
-.marca__nome{ font-family:var(--fonte-titulo); font-weight:700; font-size:1.35rem; letter-spacing:.01em; }
-.marca__legenda{ font-size:.78rem; color:var(--areia-200); font-weight:500; }
-
-.sessao-usuario{ display:inline-flex; align-items:center; gap:.6rem; font-size:.85rem; color:var(--areia-50); }
-.sessao-usuario__nome{ font-weight:700; }
-.sessao-usuario__perfil{ color:var(--areia-200); font-size:.78rem; }
-.btn-sair{
-  background:transparent; border:1px solid var(--rio-600); color:var(--areia-50);
-  border-radius:var(--raio); padding:.3rem .6rem; font-size:.78rem; font-weight:600; cursor:pointer;
-}
-.btn-sair:hover{ background:var(--rio-700); }
+.marca__texto{ display:flex; flex-direction:column; line-height:1.15; }
+.marca__nome{ font-weight:800; font-size:1.2rem; letter-spacing:.01em; color:var(--azul-900); }
+.marca__legenda{ font-size:.8rem; color:var(--texto-suave); font-weight:500; }
 
 .status-conexao{
   display:inline-flex; align-items:center; gap:.5rem;
-  padding:.4rem .75rem; border-radius:999px; font-weight:600; font-size:.85rem;
-  background:var(--rio-800); border:1px solid var(--rio-600);
+  padding:.35rem .85rem; border-radius:999px; font-weight:600; font-size:.85rem;
+  background:var(--verde-50); color:var(--verde-600); border:1px solid #BFE3C4;
 }
-.status-conexao__ponto{ width:.6rem; height:.6rem; border-radius:50%; background:var(--mata-500); box-shadow:0 0 0 3px rgba(62,142,99,.25); }
-.status-conexao.offline .status-conexao__ponto{ background:var(--aviso-500); box-shadow:0 0 0 3px rgba(232,163,61,.25); }
-.status-conexao.offline{ color:var(--aviso-500); border-color:var(--aviso-700); }
+.status-conexao__ponto{ width:.6rem; height:.6rem; border-radius:50%; background:var(--verde-500); box-shadow:0 0 0 3px rgba(22,136,33,.2); }
+.status-conexao.offline{ background:var(--amarelo-50); color:var(--amarelo-700); border-color:#EBD27A; }
+.status-conexao.offline .status-conexao__ponto{ background:#E0A800; box-shadow:0 0 0 3px rgba(224,168,0,.25); }
 
-.btn-sync{
-  background:transparent; border:1px solid var(--rio-600); color:var(--areia-200);
-  border-radius:var(--raio); padding:.35rem .65rem; font-size:.76rem; font-weight:600; cursor:pointer; white-space:nowrap;
+.menu-usuario__avatar{
+  width:36px; height:36px; border-radius:50%; background:var(--azul-700); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem; flex:0 0 auto;
 }
-.btn-sync:hover{ background:var(--rio-700); color:var(--areia-50); }
+.menu-usuario__texto{ display:flex; flex-direction:column; line-height:1.15; text-align:left; }
+.sessao-usuario__nome{ font-weight:700; font-size:.9rem; color:var(--azul-900); max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sessao-usuario__perfil{ color:var(--texto-suave); font-size:.76rem; }
+.conta{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.btn-conta{
+  min-height:44px; padding:.4rem 1rem; border-radius:999px; border:1.5px solid var(--azul-700); background:#fff; color:var(--azul-700);
+  font-weight:600; font-size:.9rem; cursor:pointer; transition:background-color .18s ease;
+}
+.btn-conta:hover{ background:var(--azul-50); }
+.btn-conta--sair{ border-color:var(--vermelho-700); color:var(--vermelho-700); }
+.btn-conta--sair:hover{ background:var(--vermelho-50); }
 
-.controles-a11y{ display:flex; align-items:center; gap:.4rem; border-left:1px solid var(--rio-600); padding-left:1rem; }
-.controles-a11y button{
-  background:var(--rio-800); color:var(--areia-50); border:1px solid var(--rio-600);
-  border-radius:var(--raio); padding:.4rem .6rem; cursor:pointer; font-size:.85rem; font-weight:600;
+/* abas do gestor */
+.abas{ border-top:1px solid var(--linha); }
+.abas:not(:has(.btn-aba:not([hidden]))){ display:none; }
+.abas__lista{ max-width:1200px; margin:0 auto; padding:.45rem 1.25rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+.btn-aba{
+  min-height:44px; padding:.4rem 1.1rem; border-radius:999px; border:1.5px solid var(--azul-200); background:var(--azul-50); color:var(--azul-800);
+  font-weight:600; font-size:.95rem; cursor:pointer; transition:background-color .18s ease, border-color .18s ease;
 }
-.controles-a11y button:hover{ background:var(--rio-700); }
-.controles-a11y button[aria-pressed="true"]{ background:var(--mata-600); border-color:var(--mata-500); }
+.btn-aba[hidden]{ display:none; }
+.btn-aba:hover{ background:#fff; border-color:var(--azul-700); }
+
+/* barra de acessibilidade (sempre visível, também no login) */
+.barra-a11y{ background:var(--azul-900); color:#fff; }
+.barra-a11y__in{ max-width:1200px; margin:0 auto; padding:.35rem 1.25rem; display:flex; align-items:center; justify-content:flex-end; gap:.9rem; flex-wrap:wrap; }
+.barra-a11y__rotulo{ font-size:.82rem; font-weight:600; margin-right:auto; opacity:.9; }
+.barra-a11y__grupo{ display:inline-flex; gap:.25rem; }
+.barra-a11y button{
+  min-height:40px; min-width:44px; padding:.2rem .8rem; border-radius:999px; border:1.5px solid rgba(255,255,255,.65); background:transparent; color:#fff;
+  font-weight:700; font-size:.92rem; cursor:pointer; transition:background-color .18s ease;
+}
+.barra-a11y button:hover{ background:rgba(255,255,255,.16); }
+.barra-a11y .barra-a11y__contraste{ display:inline-flex; align-items:center; gap:.5rem; }
+.ico-contraste{ width:1.05rem; height:1.05rem; border-radius:50%; border:2px solid #fff; background:linear-gradient(90deg,#fff 50%,transparent 50%); }
+.barra-a11y button[aria-pressed="true"]{ background:#FFE600; border-color:#FFE600; color:#000; }
+.barra-a11y button[aria-pressed="true"] .ico-contraste{ border-color:#000; background:linear-gradient(90deg,#000 50%,transparent 50%); }
+.barra-a11y :focus-visible{ outline:3px solid #FFE600; box-shadow:none; }
 
 /* ===================== LAYOUT GERAL ===================== */
-.envoltorio{ max-width:1280px; margin:0 auto; padding:2rem 1.25rem 4rem; }
-.pagina-titulo{ margin:0 0 .35rem; font-family:var(--fonte-titulo); font-size:1.85rem; color:var(--rio-950); }
-.pagina-descricao{ margin:0 0 2rem; max-width:70ch; color:var(--noite-700); }
+.envoltorio{ max-width:1200px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+.pagina-titulo{ margin:.4rem 0 1.5rem; font-size:1.9rem; font-weight:800; letter-spacing:-.01em; color:var(--azul-900); }
+.pagina-titulo:focus{ outline:none; }
 
 .painel{
-  background:var(--branco); border:var(--borda); border-radius:var(--raio);
-  padding:1.25rem 1.35rem; margin-bottom:1.5rem;
+  background:var(--superficie); border:var(--borda); border-radius:var(--raio-grande);
+  padding:1.4rem 1.5rem; margin-bottom:1.5rem; box-shadow:var(--sombra);
 }
 .painel__titulo{
-  margin:0 0 .9rem; font-family:var(--fonte-titulo); font-size:1.12rem; color:var(--rio-950);
-  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+  margin:0 0 1rem; font-size:1.1rem; font-weight:700; color:var(--azul-900);
+  display:flex; align-items:center; justify-content:space-between; gap:.6rem;
 }
-.painel__acao{ font-size:.85rem; font-weight:600; color:var(--rio-700); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0; }
-.painel__rodape{ margin-top:1rem; font-size:.82rem; color:var(--noite-700); }
+.painel__rodape, .resumo-grafo{ margin-top:.9rem; font-size:.85rem; color:var(--texto-suave); }
 
-.btn-primario{
-  background:var(--mata-500); color:var(--branco); border:none; border-radius:var(--raio);
-  padding:.75rem 1.4rem; font-weight:700; font-size:1rem; cursor:pointer;
-}
-.btn-primario:hover{ background:var(--mata-600); }
-.btn-primario:disabled{ background:var(--areia-200); color:var(--noite-700); cursor:not-allowed; }
-
-.btn-secundario{
-  background:var(--branco); border:1.5px solid var(--rio-700); color:var(--rio-700);
-  border-radius:var(--raio); padding:.55rem .95rem; font-weight:600; cursor:pointer; font-size:.9rem;
-}
-.btn-secundario:hover{ background:var(--rio-700); color:var(--branco); }
-
-.campo{ margin-bottom:1rem; }
+.campo{ margin-bottom:1.1rem; }
 .campo:last-child{ margin-bottom:0; }
-.campo label{ display:block; font-weight:600; font-size:.9rem; margin-bottom:.3rem; }
-.campo input[type="text"], .campo input[type="number"], .campo input[type="date"],
-.campo select, .campo textarea{
-  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
-  background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit;
+.campo label{ display:block; font-weight:600; font-size:.92rem; margin-bottom:.35rem; color:var(--texto); }
+.campo input[type="text"], .campo input[type="number"], .campo input[type="date"], .campo input[type="email"],
+.campo input[type="password"], .campo input[type="url"], .campo input[type="search"],
+.campo select, .campo textarea, .filtro-campo select, dialog.caixa .campo input{
+  width:100%; min-height:46px; padding:.65rem .85rem; border:1.5px solid #B6C2D6; border-radius:var(--raio);
+  background:#fff; color:var(--texto); font-size:1rem; font-family:inherit;
+  transition:border-color .18s ease, box-shadow .18s ease;
 }
-.campo input:focus, .campo select:focus, .campo textarea:focus{ background:var(--branco); }
-.campo-linha{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
-@media (max-width:520px){ .campo-linha{ grid-template-columns:1fr; } }
+.campo textarea{ min-height:96px; resize:vertical; }
+.campo input:hover, .campo select:hover, .campo textarea:hover{ border-color:var(--azul-600); }
+.campo input:focus, .campo select:focus, .campo textarea:focus, .filtro-campo select:focus{
+  outline:none; border-color:var(--azul-700); box-shadow:0 0 0 4px rgba(19,81,180,.18);
+}
+.campo-linha{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap:1rem; margin-bottom:1.1rem; }
+.campo-linha > *{ min-width:0; }
+.campo input[type="date"]{ min-width:0; -webkit-appearance:none; appearance:none; }
+.campo-linha .campo{ margin-bottom:0; }
 
-fieldset{ border:1.5px solid var(--areia-200); border-radius:var(--raio); padding:1rem 1.1rem; margin:0 0 1.2rem; }
-legend{ font-weight:700; padding:0 .4rem; font-size:.92rem; }
-.opcao-radio{ display:flex; align-items:flex-start; gap:.5rem; margin-bottom:.6rem; font-size:.92rem; }
-.opcao-radio input{ margin-top:.3rem; }
+fieldset{ border:1.5px solid var(--linha); border-radius:var(--raio); padding:1rem 1.1rem 1.1rem; margin:0 0 1.2rem; min-width:0; }
+legend{ font-weight:700; padding:0 .5rem; font-size:.95rem; color:var(--azul-900); }
+.opcao-radio{ display:flex; align-items:flex-start; gap:.6rem; margin-bottom:.4rem; font-size:.97rem; min-height:44px; align-items:center; }
+.opcao-radio input{ width:1.2rem; height:1.2rem; accent-color:var(--azul-700); flex:0 0 auto; }
 .opcao-radio label{ cursor:pointer; }
 
-.nivel-pilula{ display:inline-block; padding:.15rem .55rem; border-radius:999px; font-size:.76rem; font-weight:700; color:var(--branco); }
-.nivel-pilula.alto{ background:var(--alerta-500); }
-.nivel-pilula.medio{ background:var(--aviso-500); color:var(--noite-900); }
-.nivel-pilula.baixo{ background:var(--mata-500); }
+/* sintomas como "chips" */
+.grade-checks{ display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,14rem),1fr)); gap:.55rem; }
+.grade-checks label{
+  display:flex; align-items:center; gap:.65rem; min-height:46px; padding:.45rem .9rem; cursor:pointer;
+  border:1.5px solid var(--linha); border-radius:999px; background:#fff; font-size:.95rem;
+  transition:background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.grade-checks label:hover{ border-color:var(--azul-600); background:var(--azul-50); }
+.grade-checks input{ width:1.2rem; height:1.2rem; flex:0 0 auto; accent-color:var(--azul-700); }
+.grade-checks label:has(input:checked){ background:var(--azul-100); border-color:var(--azul-700); font-weight:600; }
+.grade-checks.alarme label:has(input:checked){ background:var(--vermelho-50); border-color:var(--vermelho-500); color:var(--vermelho-700); }
+.grade-checks.alarme input{ accent-color:var(--vermelho-500); }
 
-.rodape{ background:var(--rio-950); color:var(--areia-200); text-align:center; padding:1.2rem; font-size:.82rem; }
+.nivel-pilula{ display:inline-block; padding:.25rem .75rem; border-radius:999px; font-size:.8rem; font-weight:700; color:#fff; }
+.nivel-pilula.alto{ background:var(--vermelho-500); }
+.nivel-pilula.medio{ background:var(--amarelo-500); color:var(--texto); }
+.nivel-pilula.baixo{ background:var(--verde-500); }
+
+.rodape{ text-align:center; padding:1.6rem 1rem 2rem; font-size:.85rem; color:var(--texto-suave); display:flex; flex-direction:column; align-items:center; gap:.8rem; }
+.btn-demo{
+  background:none; border:none; color:var(--texto-suave); font-size:.82rem; text-decoration:underline; text-underline-offset:3px;
+  cursor:pointer; min-height:44px; padding:.4rem .8rem;
+}
+.btn-demo:hover{ color:var(--azul-700); }
 
 /* ===================== VISÃO ACS ===================== */
 .layout{ display:grid; grid-template-columns:1.6fr 1fr; gap:2rem; align-items:start; }
 @media (max-width:880px){ .layout{ grid-template-columns:1fr; } }
 
-.trilha{ list-style:none; margin:0; padding:0; position:relative; }
-.etapa{ position:relative; padding:0 0 2.25rem 3.25rem; border-left:2px solid var(--areia-200); margin-left:1rem; }
+.trilha{ list-style:none; margin:0; padding:0; }
+.etapa{ position:relative; padding:0 0 1.6rem 3.4rem; border-left:2px solid var(--azul-100); margin-left:1.05rem; }
 .etapa:last-child{ border-left-color:transparent; padding-bottom:0; }
 .etapa__marcador{
-  position:absolute; left:-1.05rem; top:0; width:2.1rem; height:2.1rem; border-radius:50%;
-  background:var(--rio-950); color:var(--areia-50); display:flex; align-items:center; justify-content:center;
-  font-family:var(--fonte-titulo); font-weight:700; font-size:1rem;
-  border:3px solid var(--areia-50); box-shadow:0 0 0 2px var(--areia-200);
+  position:absolute; left:-1.1rem; top:.35rem; width:2.2rem; height:2.2rem; border-radius:50%;
+  background:var(--azul-700); color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:1rem; border:3px solid var(--fundo); box-shadow:0 0 0 2px var(--azul-100);
 }
-.etapa__corpo{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1.25rem 1.4rem 1.4rem; }
-.etapa__titulo{ margin:0 0 .25rem; font-family:var(--fonte-titulo); font-size:1.15rem; color:var(--rio-950); }
-.etapa__ajuda{ margin:0 0 1rem; font-size:.88rem; color:var(--noite-700); }
-
-.btn-gps{
-  display:inline-flex; align-items:center; gap:.4rem; margin-top:.5rem;
-  background:var(--areia-100); border:1.5px solid var(--areia-200); color:var(--noite-900);
-  border-radius:var(--raio); padding:.5rem .8rem; font-weight:600; font-size:.88rem; cursor:pointer;
-}
-.btn-gps:hover{ background:var(--areia-200); }
-.gps-resultado{ margin-top:.5rem; font-size:.85rem; font-weight:600; color:var(--mata-600); }
+.etapa__corpo{ background:var(--superficie); border:var(--borda); border-radius:var(--raio-grande); padding:1.3rem 1.5rem 1.5rem; box-shadow:var(--sombra); }
+.etapa__titulo{ margin:0 0 1rem; font-size:1.15rem; font-weight:700; color:var(--azul-900); }
 
 .gravador{
-  display:flex; align-items:center; gap:1rem; background:var(--areia-50);
-  border:1.5px dashed var(--areia-200); border-radius:var(--raio); padding:1rem; flex-wrap:wrap;
+  display:flex; align-items:center; gap:1rem; background:var(--azul-50);
+  border:1.5px dashed var(--azul-200); border-radius:var(--raio); padding:1rem; flex-wrap:wrap;
 }
 .btn-gravar{
-  display:inline-flex; align-items:center; gap:.55rem; background:var(--barro-500); color:var(--branco);
-  border:none; border-radius:999px; padding:.65rem 1.15rem; font-weight:700; cursor:pointer; font-size:.95rem;
+  display:inline-flex; align-items:center; gap:.6rem; background:var(--azul-700); color:#fff;
+  border:2px solid var(--azul-700); border-radius:999px; padding:.6rem 1.3rem; min-height:48px; font-weight:600; font-size:1rem;
 }
-.btn-gravar:hover{ background:var(--barro-600); }
-.btn-gravar[aria-pressed="true"]{ background:var(--alerta-500); }
-.btn-gravar__ponto{ width:.65rem; height:.65rem; border-radius:50%; background:var(--branco); }
-.gravador__status{ font-size:.88rem; color:var(--noite-700); flex:1; min-width:180px; }
+.btn-gravar:hover{ background:var(--azul-800); border-color:var(--azul-800); }
+.btn-gravar[aria-pressed="true"]{ background:var(--vermelho-500); border-color:var(--vermelho-500); }
+.btn-gravar__ponto{ width:.7rem; height:.7rem; border-radius:50%; background:#fff; }
+.btn-gravar[aria-pressed="true"] .btn-gravar__ponto{ animation:batida 1s ease-in-out infinite; }
+@keyframes batida{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.5); } }
+.gravador__status{ font-size:.92rem; color:var(--texto-suave); flex:1; min-width:180px; margin:0; }
 .onda{ display:flex; align-items:flex-end; gap:3px; height:28px; }
-.onda span{ width:4px; background:var(--rio-700); border-radius:2px; opacity:.35; height:6px; }
+.onda span{ width:4px; background:var(--azul-700); border-radius:2px; opacity:.3; height:6px; }
 .gravador.gravando .onda span{ animation:pulsar 1s ease-in-out infinite; opacity:1; }
-.onda span:nth-child(1){ animation-delay:.0s; } .onda span:nth-child(2){ animation-delay:.15s; }
+.onda span:nth-child(1){ animation-delay:0s; } .onda span:nth-child(2){ animation-delay:.15s; }
 .onda span:nth-child(3){ animation-delay:.3s; } .onda span:nth-child(4){ animation-delay:.45s; }
 .onda span:nth-child(5){ animation-delay:.2s; }
 @keyframes pulsar{ 0%,100%{ height:6px; } 50%{ height:24px; } }
-@media (prefers-reduced-motion: reduce){ .onda span{ animation:none !important; } }
+.audio-gravado{ display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.7rem; }
+.audio-gravado audio{ max-width:100%; }
 
-.upload-foto{ border:1.5px dashed var(--areia-200); border-radius:var(--raio); padding:1.1rem; text-align:center; background:var(--areia-50); }
-.upload-foto__botoes{ display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin-top:.6rem; }
-.upload-foto__preview{ margin-top:.8rem; font-size:.85rem; font-weight:600; color:var(--mata-600); display:none; }
+.upload-foto{ border:1.5px dashed var(--azul-200); border-radius:var(--raio); padding:1.2rem; text-align:center; background:var(--azul-50); }
+.upload-foto p{ margin:0 0 .3rem; font-size:.95rem; color:var(--texto-suave); }
+.upload-foto__botoes{ display:flex; gap:.7rem; justify-content:center; flex-wrap:wrap; margin-top:.7rem; }
+.upload-foto__preview{ margin-top:.8rem; font-size:.88rem; display:none; }
 .upload-foto__preview.ativo{ display:block; }
+.upload-foto__preview img{ display:block; max-width:220px; max-height:180px; margin:0 auto .6rem; border-radius:var(--raio); border:1px solid var(--linha); }
 
 .acao-inferencia{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
-.inferencia-nota{ font-size:.85rem; color:var(--noite-700); }
+.inferencia-nota{ font-size:.88rem; color:var(--texto-suave); }
+.inferencia-nota:empty{ display:none; }
+.status-modelo{ font-size:.85rem; margin:0 0 1rem; color:var(--texto-suave); }
+.status-modelo.teste{ color:var(--vermelho-700); font-weight:700; }
 
-.resultado-ia{ margin-top:1.1rem; border-radius:var(--raio); border:1.5px solid var(--areia-200); padding:1.1rem 1.2rem; display:none; }
-.resultado-ia.visivel{ display:block; }
-.resultado-ia.risco-baixo{ border-color:var(--mata-500); background:#F1F8F3; }
-.resultado-ia.risco-alto{ border-color:var(--alerta-500); background:#FBEEEC; }
-.resultado-ia__cabeca{ display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; margin-bottom:.6rem; }
-.resultado-ia__probabilidade{ font-family:var(--fonte-titulo); font-size:1.9rem; font-weight:700; }
-.risco-baixo .resultado-ia__probabilidade{ color:var(--mata-600); }
-.risco-alto .resultado-ia__probabilidade{ color:var(--alerta-700); }
-.resultado-ia__fontes{ font-size:.8rem; font-weight:600; color:var(--rio-700); margin:0 0 .5rem; }
-.selo-risco{ display:inline-block; padding:.3rem .7rem; border-radius:999px; font-weight:700; font-size:.8rem; }
-.risco-baixo .selo-risco{ background:var(--mata-500); color:var(--branco); }
-.risco-alto .selo-risco{ background:var(--alerta-500); color:var(--branco); }
-.resultado-ia__lista{ margin:.6rem 0 0; padding-left:1.2rem; font-size:.9rem; }
-.resultado-ia__aviso{ margin-top:.8rem; font-size:.82rem; color:var(--noite-700); border-top:1px solid rgba(0,0,0,.08); padding-top:.6rem; }
+.resultado-ia{ margin-top:1.2rem; border-radius:var(--raio); border:2px solid var(--linha); padding:1.2rem 1.3rem; display:none; }
+.resultado-ia.visivel{ display:block; animation:entrar .4s ease both; }
+.resultado-ia.risco-baixo{ border-color:var(--verde-500); background:var(--verde-50); }
+.resultado-ia.risco-alto{ border-color:var(--vermelho-500); background:var(--vermelho-50); }
+.resultado-ia__cabeca{ display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.6rem; }
+.resultado-ia__probabilidade{ font-size:2.2rem; font-weight:800; line-height:1.1; }
+.risco-baixo .resultado-ia__probabilidade{ color:var(--verde-600); }
+.risco-alto .resultado-ia__probabilidade{ color:var(--vermelho-700); }
+.resultado-ia__fontes{ font-size:.85rem; font-weight:600; color:var(--azul-800); margin:0 0 .5rem; }
+.selo-risco{ display:inline-block; padding:.4rem 1rem; border-radius:999px; font-weight:700; font-size:.9rem; color:#fff; }
+.risco-baixo .selo-risco{ background:var(--verde-500); }
+.risco-alto .selo-risco{ background:var(--vermelho-500); }
+.resultado-ia__lista, .bloco-ia__lista{ margin:.6rem 0 0; padding-left:1.2rem; font-size:.93rem; }
+.resultado-ia__lista li, .bloco-ia__lista li{ margin-bottom:.25rem; }
+.resultado-ia__aviso{ margin:.9rem 0 0; font-size:.85rem; color:var(--texto-suave); border-top:1px solid rgba(7,29,65,.1); padding-top:.7rem; }
 .resultado-ia__aviso-vazio{
-  font-size:.85rem; font-weight:600; color:var(--aviso-700); background:#FCF3E3;
-  border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.7rem .9rem; margin-top:.8rem;
+  font-size:.9rem; font-weight:600; color:var(--amarelo-700); background:var(--amarelo-50);
+  border:1px solid #EBD27A; border-radius:var(--raio); padding:.7rem .9rem; margin-top:.9rem;
 }
+.nota-prototipo{ font-size:.85rem; color:var(--texto-suave); margin:.7rem 0 0; }
+.nota-prototipo:empty{ display:none; }
+.msg-status{ font-size:.9rem; font-weight:600; margin:.7rem 0 0; min-height:1.2em; color:var(--texto-suave); }
+.msg-status:empty{ margin:0; min-height:0; }
+.msg-status.erro{ color:var(--vermelho-700); }
+.msg-status.ok{ color:var(--verde-600); }
+.resumo-sync{ font-size:.88rem; color:var(--texto-suave); margin:.2rem 0 .8rem; }
 
-.contador{ background:var(--barro-500); color:var(--branco); border-radius:999px; padding:.15rem .6rem; font-size:.78rem; font-weight:700; font-family:var(--fonte-corpo); }
+.contador{ background:var(--azul-700); color:#fff; border-radius:999px; padding:.15rem .7rem; font-size:.8rem; font-weight:700; }
 .lista-pendentes{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.65rem; }
 .item-pendente{
-  border:1px solid var(--areia-200); border-left-width:4px; border-radius:var(--raio); padding:.65rem .8rem;
-  display:flex; justify-content:space-between; align-items:center; gap:.6rem; font-size:.87rem;
+  border:1px solid var(--linha); border-left-width:5px; border-radius:var(--raio); padding:.7rem .9rem; background:#fff;
+  display:flex; justify-content:space-between; align-items:center; gap:.6rem; font-size:.9rem;
 }
-.item-pendente.prioritario{ border-left-color:var(--alerta-500); }
-.item-pendente.padrao{ border-left-color:var(--aviso-500); }
-.item-pendente.sincronizado{ border-left-color:var(--rio-600); }
-.item-pendente.validado{ border-left-color:var(--mata-500); opacity:.75; }
+.item-pendente.prioritario{ border-left-color:var(--vermelho-500); }
+.item-pendente.padrao{ border-left-color:#E0A800; }
+.item-pendente.sincronizado{ border-left-color:var(--azul-700); }
+.item-pendente.validado{ border-left-color:var(--verde-500); opacity:.8; }
+.item-pendente.rejeitado{ border-left-color:var(--vermelho-700); background:var(--vermelho-50); }
 .item-pendente__nome{ font-weight:700; }
-.item-pendente__meta{ color:var(--noite-700); font-size:.8rem; }
-.etiqueta-status{ font-size:.72rem; font-weight:700; padding:.2rem .5rem; border-radius:999px; white-space:nowrap; }
-.prioritario .etiqueta-status{ background:var(--alerta-500); color:var(--branco); }
-.padrao .etiqueta-status{ background:var(--aviso-500); color:var(--noite-900); }
-.sincronizado .etiqueta-status{ background:var(--rio-600); color:var(--branco); }
-.validado .etiqueta-status{ background:var(--mata-500); color:var(--branco); }
+.item-pendente__meta{ color:var(--texto-suave); font-size:.82rem; }
+.item-pendente__erro{ display:block; color:var(--vermelho-700); font-size:.8rem; margin-top:.15rem; }
+.etiqueta-status{ font-size:.74rem; font-weight:700; padding:.25rem .65rem; border-radius:999px; white-space:nowrap; }
+.prioritario .etiqueta-status{ background:var(--vermelho-500); color:#fff; }
+.padrao .etiqueta-status{ background:var(--amarelo-500); color:var(--texto); }
+.sincronizado .etiqueta-status{ background:var(--azul-700); color:#fff; }
+.validado .etiqueta-status{ background:var(--verde-500); color:#fff; }
+.rejeitado .etiqueta-status{ background:var(--vermelho-700); color:#fff; }
+
+@media (max-width:560px){
+  .envoltorio{ padding:1.2rem 1rem 3rem; }
+  .pagina-titulo{ font-size:1.5rem; }
+  .etapa{ padding:0 0 1.2rem 0; margin-left:0; border-left:0; }
+  .etapa__marcador{ position:static; margin:0 0 .5rem; width:2rem; height:2rem; box-shadow:none; border:0; }
+  .etapa__corpo{ padding:1.1rem 1rem 1.2rem; }
+  .painel{ padding:1.1rem 1rem; }
+  .cabecalho__barra{ padding:.55rem 1rem; gap:.6rem; }
+}
 
 /* ===================== VISÃO GESTOR ===================== */
 .filtros{
-  display:flex; gap:1rem; align-items:end; flex-wrap:wrap; background:var(--branco);
-  border:var(--borda); border-radius:var(--raio); padding:1rem 1.2rem; margin-bottom:1.5rem;
+  display:flex; gap:1rem; align-items:end; flex-wrap:wrap; background:var(--superficie);
+  border:var(--borda); border-radius:var(--raio-grande); padding:1.1rem 1.3rem; margin-bottom:1.2rem; box-shadow:var(--sombra);
 }
-.filtro-campo label{ display:block; font-weight:600; font-size:.85rem; margin-bottom:.3rem; }
-.filtro-campo select{
-  padding:.5rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
-  background:var(--areia-50); min-width:180px; font-size:.9rem;
-}
+.filtro-campo label{ display:block; font-weight:600; font-size:.9rem; margin-bottom:.3rem; }
+.filtro-campo select{ min-width:190px; width:auto; }
 
-.indicadores{ display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin-bottom:1.75rem; }
+.indicadores{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.2rem 0 1.6rem; }
 @media (max-width:920px){ .indicadores{ grid-template-columns:repeat(2,1fr); } }
 @media (max-width:520px){ .indicadores{ grid-template-columns:1fr; } }
-.indicador{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1rem 1.1rem; border-top:4px solid var(--rio-700); }
-.indicador.destaque-alto{ border-top-color:var(--alerta-500); }
-.indicador.destaque-medio{ border-top-color:var(--aviso-500); }
-.indicador.destaque-ok{ border-top-color:var(--mata-500); }
-.indicador__valor{ font-family:var(--fonte-titulo); font-size:2rem; font-weight:700; color:var(--rio-950); line-height:1; }
-.indicador__rotulo{ font-size:.85rem; color:var(--noite-700); margin-top:.35rem; }
+.indicador{
+  background:var(--superficie); border:var(--borda); border-radius:var(--raio-grande); padding:1.1rem 1.2rem;
+  box-shadow:var(--sombra); position:relative; overflow:hidden; transition:transform .18s ease, box-shadow .18s ease;
+}
+.indicador:hover{ transform:translateY(-2px); box-shadow:var(--sombra-forte); }
+.indicador::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--azul-700); }
+.indicador.destaque-alto::before{ background:var(--vermelho-500); }
+.indicador.destaque-medio::before{ background:#E0A800; }
+.indicador.destaque-ok::before{ background:var(--verde-500); }
+.indicador__valor{ font-size:2.2rem; font-weight:800; color:var(--azul-900); line-height:1.05; padding-left:.4rem; }
+.indicador__rotulo{ font-size:.9rem; color:var(--texto-suave); margin-top:.35rem; padding-left:.4rem; }
 
 .layout-vigilancia{ display:grid; grid-template-columns:1.7fr 1fr; gap:1.5rem; align-items:start; }
 @media (max-width:960px){ .layout-vigilancia{ grid-template-columns:1fr; } }
 
-.mapa-legenda{ display:flex; gap:1.2rem; flex-wrap:wrap; margin-top:.8rem; font-size:.82rem; color:var(--noite-700); }
-.mapa-legenda span{ display:inline-flex; align-items:center; gap:.4rem; }
-.mapa-legenda i{ width:.8rem; height:.8rem; border-radius:50%; display:inline-block; }
-.mapa-aviso{ font-size:.8rem; color:var(--noite-700); margin-top:.6rem; padding-top:.6rem; border-top:1px solid var(--areia-200); }
+.mapa-legenda{ display:flex; gap:.5rem 1.2rem; flex-wrap:wrap; margin-top:.9rem; font-size:.85rem; color:var(--texto-suave); }
+.mapa-legenda span{ display:inline-flex; align-items:center; gap:.45rem; }
+.mapa-legenda i{ width:.85rem; height:.85rem; border-radius:50%; display:inline-block; }
+.mapa-legenda i.tracejado{ background:transparent; border:2px dashed var(--texto-suave); }
+#mapaLeaflet{ height:440px; border-radius:var(--raio); border:1px solid var(--linha); z-index:0; }
+.mapa-erro{ font-size:.9rem; color:var(--amarelo-700); background:var(--amarelo-50); border:1px solid #EBD27A; border-radius:var(--raio); padding:.7rem .9rem; }
 
-.tabela-focos{ width:100%; border-collapse:collapse; font-size:.88rem; }
-.tabela-focos caption{ text-align:left; font-weight:600; margin-bottom:.5rem; color:var(--noite-700); font-size:.85rem; }
-.tabela-focos th, .tabela-focos td{ text-align:left; padding:.55rem .6rem; border-bottom:1px solid var(--areia-200); }
-.tabela-focos th{ background:var(--rio-950); color:var(--areia-50); font-size:.8rem; text-transform:uppercase; letter-spacing:.02em; }
+.tabela-focos{ width:100%; border-collapse:collapse; font-size:.92rem; }
+.tabela-focos caption{ text-align:left; font-weight:600; margin-bottom:.5rem; color:var(--texto-suave); font-size:.88rem; }
+.tabela-focos th, .tabela-focos td{ text-align:left; padding:.7rem .75rem; border-bottom:1px solid var(--linha); }
+.tabela-focos th{ background:var(--azul-50); color:var(--azul-900); font-size:.8rem; font-weight:700; letter-spacing:.02em; }
+.tabela-focos th:first-child{ border-top-left-radius:10px; } .tabela-focos th:last-child{ border-top-right-radius:10px; }
+.tabela-focos tbody tr{ transition:background-color .15s ease; }
+.tabela-focos tbody tr:hover{ background:var(--azul-50); }
+
+/* ---- grafo em círculo ---- */
+.grafo{ display:flex; flex-wrap:wrap; gap:1.2rem 2rem; align-items:center; justify-content:center; }
+.grafo__svg{ width:min(100%,380px); height:auto; flex:0 1 380px; }
+.grafo__espoca{ stroke:var(--azul-200); stroke-width:2; }
+.grafo__centro{ fill:var(--azul-900); }
+.grafo__centro-texto{ fill:#fff; font-size:13px; font-weight:700; text-anchor:middle; }
+.grafo__no{ fill:var(--azul-700); stroke:#fff; stroke-width:3; transition:fill .2s ease, opacity .2s ease; cursor:pointer; }
+.grafo__no.alarme{ fill:var(--vermelho-500); }
+.grafo__num{ fill:#fff; font-size:15px; font-weight:700; text-anchor:middle; dominant-baseline:central; pointer-events:none; }
+.grafo__grupo{ transform-box:fill-box; transform-origin:center; animation:brotar .6s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes brotar{ from{ opacity:0; transform:scale(.3); } to{ opacity:1; transform:scale(1); } }
+.grafo__legenda{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.4rem; flex:1 1 240px; max-width:360px; }
+.grafo__item{
+  display:flex; align-items:center; gap:.7rem; padding:.45rem .75rem; border-radius:999px; border:1px solid transparent;
+  font-size:.95rem; transition:background-color .15s ease, border-color .15s ease;
+}
+.grafo__item .n{
+  flex:0 0 auto; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--azul-700); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700;
+}
+.grafo__item.alarme .n{ background:var(--vermelho-500); }
+.grafo__item .nome{ flex:1; }
+.grafo__item .qtd{ font-weight:700; color:var(--azul-900); }
+.grafo__item .alerta{ font-size:.72rem; font-weight:700; color:var(--vermelho-700); }
+.grafo__item.ativo{ background:var(--azul-50); border-color:var(--azul-200); }
+.grafo--tem-ativo .grafo__no:not(.ativo){ opacity:.35; }
+.grafo__no.ativo{ stroke:var(--azul-900); }
 
 /* ===================== VISÃO MÉDICO ===================== */
 .layout-validacao{ display:grid; grid-template-columns:.9fr 1.4fr; gap:1.5rem; align-items:start; }
 @media (max-width:960px){ .layout-validacao{ grid-template-columns:1fr; } }
-
 .fila-casos{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.6rem; }
 .caso-item{
-  width:100%; text-align:left; background:var(--areia-50); border:1.5px solid var(--areia-200);
-  border-left-width:5px; border-radius:var(--raio); padding:.7rem .85rem; cursor:pointer; font-size:.88rem;
+  width:100%; text-align:left; background:#fff; border:1.5px solid var(--linha);
+  border-left-width:6px; border-radius:var(--raio); padding:.8rem 1rem; cursor:pointer; font-size:.92rem; min-height:56px;
+  transition:background-color .15s ease, box-shadow .15s ease, transform .12s ease;
 }
-.caso-item.alto{ border-left-color:var(--alerta-500); }
-.caso-item.medio{ border-left-color:var(--aviso-500); }
-.caso-item[aria-current="true"]{ background:var(--areia-200); }
+.caso-item:hover{ box-shadow:var(--sombra); transform:translateY(-1px); }
+.caso-item.alto{ border-left-color:var(--vermelho-500); }
+.caso-item.medio{ border-left-color:#E0A800; }
+.caso-item[aria-current="true"]{ background:var(--azul-50); border-color:var(--azul-700); }
 .caso-item__nome{ font-weight:700; display:block; }
-.caso-item__meta{ color:var(--noite-700); font-size:.8rem; }
+.caso-item__meta{ color:var(--texto-suave); font-size:.82rem; }
 
-.ficha-caso{ background:var(--branco); border:var(--borda); border-radius:var(--raio); padding:1.3rem 1.4rem; }
-.ficha-caso__grade{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem 1.5rem; margin-bottom:1.2rem; }
+.ficha-caso{ background:var(--superficie); border:var(--borda); border-radius:var(--raio-grande); padding:1.4rem 1.5rem; box-shadow:var(--sombra); }
+.ficha-caso__grade{ display:grid; grid-template-columns:1fr 1fr; gap:1rem 1.5rem; margin:0 0 1.3rem; }
 @media (max-width:600px){ .ficha-caso__grade{ grid-template-columns:1fr; } }
-.ficha-dado dt{ font-size:.78rem; text-transform:uppercase; letter-spacing:.03em; color:var(--noite-700); font-weight:700; }
-.ficha-dado dd{ margin:.2rem 0 0; font-size:.95rem; }
+.ficha-dado dt{ font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--texto-suave); font-weight:700; }
+.ficha-dado dd{ margin:.2rem 0 0; font-size:1rem; font-weight:500; }
+.ficha-caso h3{ font-size:1.02rem; color:var(--azul-900); margin:0 0 .4rem; }
+#fichaRelato{ font-size:.95rem; background:var(--azul-50); border:1px solid var(--azul-100); border-radius:var(--raio); padding:.85rem 1rem; }
 
-.bloco-ia{ border-radius:var(--raio); border:1.5px solid var(--alerta-500); background:#FBEEEC; padding:1rem 1.2rem; margin-bottom:1.2rem; }
-.bloco-ia.medio{ border-color:var(--aviso-500); background:#FCF3E3; }
-.bloco-ia__cabeca{ display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; }
-.bloco-ia__probabilidade{ font-family:var(--fonte-titulo); font-size:1.6rem; font-weight:700; color:var(--alerta-700); }
-.bloco-ia.medio .bloco-ia__probabilidade{ color:var(--aviso-700); }
-.bloco-ia__lista{ margin:.5rem 0 0; padding-left:1.2rem; font-size:.88rem; }
+.bloco-ia{ border-radius:var(--raio); border:2px solid var(--vermelho-500); background:var(--vermelho-50); padding:1.1rem 1.3rem; margin-bottom:1.3rem; }
+.bloco-ia.medio{ border-color:#E0A800; background:var(--amarelo-50); }
+.bloco-ia__cabeca{ display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+.bloco-ia__probabilidade{ font-size:1.8rem; font-weight:800; color:var(--vermelho-700); }
+.bloco-ia.medio .bloco-ia__probabilidade{ color:var(--amarelo-700); }
 
-.acoes-ficha{ display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
-.confirmacao-envio{ font-size:.85rem; font-weight:700; color:var(--mata-600); }
-.medico-vazio{ font-size:.92rem; color:var(--noite-700); padding:1rem 0; }
-/* ===================== ACRÉSCIMOS (passos 18 e 19) ===================== */
-.campo input[type="email"], .campo input[type="password"], .campo input[type="url"]{
-  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio);
-  background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit;
+.acoes-ficha{ display:flex; gap:.9rem; flex-wrap:wrap; align-items:center; }
+.confirmacao-envio{ font-size:.9rem; font-weight:700; color:var(--verde-600); }
+.medico-vazio{ font-size:.95rem; color:var(--texto-suave); padding:1rem 0; }
+
+.ficha-midia{ margin:1.2rem 0; }
+.ficha-midia > div{ margin:.5rem 0 .9rem; display:flex; flex-direction:column; align-items:flex-start; gap:.5rem; }
+.ficha-midia audio{ display:block; width:100%; max-width:420px; }
+.ficha-midia img{ display:block; max-width:100%; max-height:420px; border-radius:var(--raio); border:1px solid var(--linha); }
+.bloco-transcricao{ margin:.5rem 0 0; padding:.8rem 1rem; border:1px dashed var(--azul-200); border-radius:var(--raio); background:var(--azul-50); width:100%; }
+.bloco-transcricao h4{ margin:0 0 .3rem; font-size:.95rem; }
+.bloco-assistente{ margin:1.2rem 0; padding:1.1rem 1.2rem; border:1px solid var(--azul-100); border-radius:var(--raio); background:var(--azul-50); }
+.bloco-assistente h3{ margin:0 0 .6rem; }
+.assist-resultado{ margin:.7rem 0 0; padding:.85rem 1rem; border:1px solid var(--azul-100); border-radius:var(--raio); background:#fff; white-space:pre-wrap; font-size:.95rem; line-height:1.55; }
+.assist-resultado .assist-selo{ display:block; font-size:.78rem; font-weight:700; color:var(--azul-700); margin-bottom:.3rem; }
+.linha-ciente{ display:flex; gap:.6rem; align-items:flex-start; font-size:.9rem; margin:.6rem 0; min-height:44px; }
+.linha-ciente input{ width:1.2rem; height:1.2rem; flex:0 0 auto; margin-top:.15rem; accent-color:var(--azul-700); }
+
+.nota-midia{ font-size:.82rem; color:var(--texto-suave); margin:.4rem 0 0; }
+details.saiba-mais{ margin-top:.7rem; font-size:.85rem; color:var(--texto-suave); }
+details.saiba-mais summary{ cursor:pointer; color:var(--azul-700); font-weight:600; min-height:32px; display:inline-flex; align-items:center; }
+details.saiba-mais p{ margin:.3rem 0 0; }
+
+/* ===================== CAIXAS (diálogos) ===================== */
+dialog.caixa{
+  border:none; border-radius:var(--raio-grande); padding:1.5rem 1.6rem; max-width:min(720px,94vw); width:100%;
+  box-shadow:0 20px 60px rgba(7,29,65,.35); color:var(--texto); background:#fff;
 }
-.login-servidor{ margin:1.1rem 0 0; font-size:.82rem; color:var(--noite-700); }
-.login-servidor summary{ cursor:pointer; font-weight:600; }
-.login-servidor__atual{ word-break:break-all; font-weight:600; color:var(--rio-700); }
-.item-pendente.rejeitado{ border-left-color:var(--alerta-700); background:#FBEEEC; }
-.rejeitado .etiqueta-status{ background:var(--alerta-700); color:var(--branco); }
-.item-pendente__erro{ display:block; color:var(--alerta-700); font-size:.78rem; margin-top:.15rem; }
-.nota-prototipo{
-  font-size:.8rem; font-weight:600; color:var(--aviso-700); background:#FCF3E3;
-  border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.55rem .8rem; margin:.6rem 0 0;
-}
-.msg-status{ font-size:.85rem; font-weight:600; margin:.7rem 0 0; min-height:1.2em; }
-.msg-status.erro{ color:var(--alerta-700); }
-.msg-status.ok{ color:var(--mata-600); }
-.resumo-sync{ font-size:.82rem; color:var(--noite-700); margin:.2rem 0 .8rem; }
-.btn-sync-claro{
-  background:var(--branco); border:1.5px solid var(--rio-700); color:var(--rio-700); border-radius:var(--raio);
-  padding:.4rem .8rem; font-weight:600; font-size:.85rem; cursor:pointer; margin-bottom:.8rem;
-}
-.btn-sync-claro:hover{ background:var(--rio-700); color:var(--branco); }
-.btn-sync-claro:disabled{ opacity:.55; cursor:not-allowed; }
-#mapaLeaflet{ height:380px; border-radius:10px; border:1px solid var(--areia-200); z-index:0; }
-.mapa-erro{ font-size:.88rem; color:var(--aviso-700); background:#FCF3E3; border:1px solid var(--aviso-500); border-radius:var(--raio); padding:.7rem .9rem; }
-.mapa-legenda i.tracejado{ background:transparent; border:2px dashed var(--noite-700); }
-.cartao-vazio{ font-size:.9rem; color:var(--noite-700); padding:.6rem 0; }
-.audio-gravado{ display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.6rem; }
-.audio-gravado audio{ max-width:100%; }
-.upload-foto__preview img{ display:block; max-width:220px; max-height:180px; margin:0 auto .6rem; border-radius:var(--raio); border:1px solid var(--areia-200); }
-.upload-foto__preview{ font-weight:400; }
-.ficha-midia{ margin:1rem 0; }
-.ficha-midia > div{ margin:.4rem 0 .8rem; }
-.ficha-midia audio{ display:block; width:100%; max-width:420px; margin-top:.6rem; }
-.ficha-midia img{ display:block; max-width:100%; max-height:420px; margin-top:.6rem; border-radius:var(--raio); border:1px solid var(--areia-200); }
-.nota-midia{ font-size:.78rem; color:var(--noite-700); margin:.2rem 0 0; }
-.btn-desabilitado-aviso{ opacity:.6; cursor:not-allowed; }
+dialog.caixa[open]{ animation:entrar .25s ease both; }
+dialog.caixa::backdrop{ background:rgba(7,29,65,.45); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+dialog.caixa h2{ margin:0 0 .5rem; font-size:1.25rem; font-weight:700; color:var(--azul-900); }
+.caixa__acoes{ display:flex; gap:.7rem; justify-content:flex-end; flex-wrap:wrap; margin-top:1.1rem; }
+dialog#dlgAuditoria{ max-height:92vh; overflow:hidden; }
+dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
+#dlgAuditoria .aud-corpo{ display:flex; flex-direction:column; min-height:0; max-height:calc(92vh - 3rem); }
+#dlgAuditoria .caixa__acoes{ flex:0 0 auto; }
+.msg-caixa{ font-size:.9rem; margin:.5rem 0 0; min-height:1.2em; }
+.msg-caixa.erro{ color:var(--vermelho-700); font-weight:600; }
+.msg-caixa.ok{ color:var(--verde-600); font-weight:600; }
+.senha-gerada{ background:var(--azul-50); border:1.5px dashed var(--azul-700); border-radius:var(--raio); padding:.8rem 1rem; margin:.8rem 0; font-size:.95rem; }
+.senha-gerada code{ font-size:1.05rem; font-weight:700; user-select:all; }
+.tabela-usuarios-rolagem{ overflow-x:auto; max-height:46vh; overflow-y:auto; margin-top:.8rem; }
+.pilula-inativo{ color:var(--vermelho-700); font-weight:700; }
+
 @media print{
-  .cabecalho, .filtros, .controles-a11y, .btn-sair, .rodape, .pular-conteudo, #btnAlternarVisaoMapa, .acao-imprimir{ display:none !important; }
+  .cabecalho, .filtros, .barra-a11y, .rodape, .pular-conteudo, #btnAlternarVisaoMapa, .acao-imprimir, .conta, .abas{ display:none !important; }
   body{ background:#fff; }
   .layout-vigilancia{ grid-template-columns:1fr; }
   #visaoTabela{ display:block !important; }
   #visaoMapa{ display:none !important; }
 }
 
+/* ===================== MAPA DE RISCO ===================== */
+#mapaLeaflet{ box-shadow:var(--sombra); overflow:hidden; background:#EEF3FA; }
+.mapa-legenda{ gap:.5rem; margin-top:.9rem; }
+.chip-leg{ padding:.3rem .8rem; border-radius:999px; background:#fff; border:1px solid var(--linha); font-weight:600; font-size:.82rem; color:var(--texto); }
+.chip-leg i{ width:.9rem; height:.9rem; }
+.chip-leg--alto i{ background:var(--vermelho-500); } .chip-leg--medio i{ background:#E0A800; } .chip-leg--baixo i{ background:var(--verde-500); }
+.chip-leg--expansao i{ background:transparent; border:2px dashed var(--azul-900); }
+.pino-wrap{ background:transparent; border:0; }
+.pino{
+  display:flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800; font-size:.9rem;
+  border:3px solid #fff; box-shadow:0 2px 8px rgba(7,29,65,.35), 0 0 0 6px rgba(255,255,255,0); transition:transform .18s ease;
+}
+.pino:hover{ transform:scale(1.1); }
+.pino--alto{ background:var(--vermelho-500); animation:pulso 2.4s ease-out infinite; }
+.pino--medio{ background:#E0A800; color:#1B2433; }
+.pino--baixo{ background:var(--verde-500); }
+.pino--expansao{ outline:3px dashed var(--azul-900); outline-offset:4px; }
+@keyframes pulso{ 0%{ box-shadow:0 2px 8px rgba(7,29,65,.35), 0 0 0 0 rgba(217,32,10,.45); } 70%,100%{ box-shadow:0 2px 8px rgba(7,29,65,.35), 0 0 0 14px rgba(217,32,10,0); } }
+@media (prefers-reduced-motion:reduce){ .pino--alto{ animation:none; } .grafo__grupo{ animation:none; } html{ scroll-behavior:auto; } }
+.leaflet-popup-content-wrapper{ border-radius:14px; box-shadow:var(--sombra-forte); }
+.leaflet-popup-content{ margin:.9rem 1rem; font-family:var(--fonte-corpo); color:var(--texto); }
+.pop__titulo{ display:block; font-size:1rem; color:var(--azul-900); margin-bottom:.4rem; }
+.pop__risco{ display:flex; align-items:center; gap:.5rem; font-size:.82rem; color:var(--texto-suave); margin-bottom:.6rem; }
+.pop__grade{ display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem; text-align:center; margin-bottom:.6rem; }
+.pop__grade div{ background:var(--azul-50); border-radius:10px; padding:.4rem .2rem; }
+.pop__grade b{ display:block; font-size:1.25rem; color:var(--azul-900); line-height:1.1; }
+.pop__grade span{ font-size:.7rem; color:var(--texto-suave); }
+.pop__linha{ font-size:.82rem; margin-top:.25rem; }
+.pop__linha--exp{ color:var(--vermelho-700); font-weight:600; }
 
-/* ---- senha e usuarios ---- */
-dialog.caixa{ border:none; border-radius:12px; padding:1.3rem 1.4rem; max-width:min(720px,94vw); width:100%; box-shadow:0 12px 40px rgba(0,0,0,.35); color:var(--noite-900); background:var(--branco); }
-dialog.caixa::backdrop{ background:rgba(8,28,32,.55); }
-dialog.caixa h2{ margin:0 0 .4rem; font-family:var(--fonte-titulo); font-size:1.2rem; color:var(--rio-950); }
-dialog.caixa .campo input[type="password"], dialog.caixa .campo input[type="email"], dialog.caixa .campo input[type="search"]{
-  width:100%; padding:.6rem .7rem; border:1.5px solid var(--areia-200); border-radius:var(--raio); background:var(--areia-50); color:var(--noite-900); font-size:.95rem; font-family:inherit; }
-.caixa__acoes{ display:flex; gap:.6rem; justify-content:flex-end; flex-wrap:wrap; margin-top:1rem; }
-dialog#dlgAuditoria{ max-height:92vh; overflow:hidden; }
-dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
-#dlgAuditoria .aud-corpo{ display:flex; flex-direction:column; min-height:0; max-height:calc(92vh - 2.6rem); }
-#dlgAuditoria .caixa__acoes{ flex:0 0 auto; }
-.grade-checks{ display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.15rem .9rem; }
-.grade-checks label{ display:flex; align-items:center; gap:.55rem; min-height:44px; cursor:pointer; font-size:.95rem; }
-.grade-checks input{ width:1.2rem; height:1.2rem; flex:0 0 auto; }
-.grade-checks.alarme label{ color:#7a2a1f; }
-.status-modelo{ font-size:.82rem; margin:.2rem 0 .8rem; color:var(--noite-700); }
-.status-modelo.teste{ color:#7a2a1f; font-weight:700; }
-.bloco-transcricao{ margin:.6rem 0 0; padding:.7rem .9rem; border:1px dashed var(--areia-200); border-radius:var(--raio); background:var(--areia-50); }
-.bloco-transcricao h4{ margin:0 0 .3rem; font-size:.92rem; }
-.bloco-assistente{ margin:1rem 0; padding:.9rem 1rem; border:1px solid var(--areia-200); border-radius:var(--raio); background:#fff; }
-.bloco-assistente h3{ font-family:var(--fonte-titulo); font-size:1.02rem; color:var(--rio-950); margin:0 0 .5rem; }
-.assist-resultado{ margin:.6rem 0 0; padding:.7rem .9rem; border:1px dashed var(--areia-200); border-radius:var(--raio); background:var(--areia-50); white-space:pre-wrap; font-size:.92rem; line-height:1.5; }
-.assist-resultado .assist-selo{ display:block; font-size:.78rem; font-weight:700; color:var(--noite-700); margin-bottom:.3rem; }
-.linha-ciente{ display:flex; gap:.5rem; align-items:flex-start; font-size:.86rem; margin:.5rem 0; }
-.linha-ciente input{ width:1.2rem; height:1.2rem; flex:0 0 auto; margin-top:.1rem; }
-.msg-caixa{ font-size:.88rem; margin:.5rem 0 0; min-height:1.2em; }
-.msg-caixa.erro{ color:#a12a1f; font-weight:600; }
-.msg-caixa.ok{ color:var(--mata-600); font-weight:600; }
-.senha-gerada{ background:var(--areia-50); border:1.5px dashed var(--rio-700); border-radius:var(--raio); padding:.7rem .9rem; margin:.8rem 0; font-size:.92rem; }
-.senha-gerada code{ font-size:1.05rem; font-weight:700; user-select:all; }
-.tabela-usuarios-rolagem{ overflow-x:auto; max-height:46vh; overflow-y:auto; margin-top:.8rem; }
-.btn-mini{ background:none; border:1.5px solid var(--rio-700); color:var(--rio-700); border-radius:var(--raio); padding:.2rem .55rem; font-size:.78rem; font-weight:600; cursor:pointer; margin:.1rem .15rem .1rem 0; }
-.btn-mini:hover{ background:var(--rio-700); color:var(--branco); }
-.btn-mini--perigo{ border-color:#a12a1f; color:#a12a1f; }
-.btn-mini--perigo:hover{ background:#a12a1f; color:var(--branco); }
-.pilula-inativo{ color:#a12a1f; font-weight:700; }
+/* tabelas do mapa */
+.tag{ display:inline-block; padding:.2rem .65rem; border-radius:999px; font-size:.8rem; font-weight:600; background:var(--azul-50); color:var(--azul-800); border:1px solid var(--azul-200); white-space:nowrap; }
+.tag--crescente{ background:var(--vermelho-50); color:var(--vermelho-700); border-color:#F2B8AF; }
+.tag--decrescente{ background:var(--verde-50); color:var(--verde-600); border-color:#BFE3C4; }
+.tag--expansao{ background:var(--amarelo-50); color:var(--amarelo-700); border-color:#EBD27A; }
+.tabela-focos .col-nome{ font-weight:600; color:var(--azul-900); }
+#visaoTabela{ overflow-x:auto; }
+#visaoTabela .tabela-focos{ min-width:560px; }
+.link-local{
+  display:flex; align-items:center; gap:.65rem; width:100%; min-height:44px; background:transparent; border:0; text-align:left; cursor:pointer;
+  font-size:.95rem; font-weight:600; color:var(--azul-800); border-radius:10px; padding:.1rem .2rem;
+}
+.link-local:hover{ background:var(--azul-50); }
+.link-local__n{ flex:0 0 auto; width:1.7rem; height:1.7rem; border-radius:50%; background:var(--azul-700); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
 
-.barra-sintoma{ display:grid; grid-template-columns:minmax(7rem,12rem) 1fr 3rem; gap:.6rem; align-items:center; margin:.35rem 0; font-size:.88rem; }
-.barra-sintoma__trilho{ background:var(--areia-200); border-radius:999px; height:.7rem; overflow:hidden; }
-.barra-sintoma__preenche{ background:var(--rio-700); height:100%; border-radius:999px; }
-.barra-sintoma__alarme .barra-sintoma__preenche{ background:#a12a1f; }
-.tag-alarme{ color:#a12a1f; font-weight:700; font-size:.72rem; margin-left:.3rem; }
-.resumo-grafo{ font-size:.82rem; color:var(--noite-700); margin:.7rem 0 0; }
+/* grafo largo com rótulos ao redor */
+.grafo--largo .grafo__svg{ width:100%; max-width:760px; flex:1 1 100%; }
+.grafo__rotulo-nome{ fill:var(--texto); font-weight:700; font-size:14px; }
+.grafo__rotulo-qtd{ fill:var(--texto-suave); font-size:12px; font-weight:500; }
+.grafo__rotulo-qtd.alarme{ fill:var(--vermelho-700); font-weight:700; }
+
+/* ===================== ALTO CONTRASTE (preto, amarelo e branco) ===================== */
+body.alto-contraste{
+  --azul-900:#FFFFFF; --azul-800:#FFE600; --azul-700:#FFE600; --azul-600:#FFE600;
+  --azul-200:#FFFFFF; --azul-100:#000000; --azul-50:#000000;
+  --verde-600:#7CFF8F; --verde-500:#00D94A; --verde-50:#000000;
+  --vermelho-700:#FF9C93; --vermelho-500:#FF4D3D; --vermelho-50:#000000;
+  --amarelo-500:#FFE600; --amarelo-700:#FFE600; --amarelo-50:#000000;
+  --fundo:#000000; --superficie:#000000; --texto:#FFFFFF; --texto-suave:#FFFFFF; --linha:#FFFFFF;
+  --foco-cor:#00E5FF;
+  background:#000; color:#fff;
+}
+body.alto-contraste a{ color:#FFE600; }
+body.alto-contraste .cabecalho, body.alto-contraste .tela-login, body.alto-contraste .painel, body.alto-contraste .filtros,
+body.alto-contraste .indicador, body.alto-contraste .etapa__corpo, body.alto-contraste .ficha-caso, body.alto-contraste dialog,
+body.alto-contraste .caso-item, body.alto-contraste .item-pendente, body.alto-contraste .assist-resultado{ background:#000; color:#fff; border:2px solid #fff; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+body.alto-contraste .cabecalho{ border-width:0 0 3px 0; }
+body.alto-contraste .barra-a11y{ background:#000; border-bottom:2px solid #FFE600; }
+body.alto-contraste .barra-a11y button{ border-color:#FFE600; color:#FFE600; }
+body.alto-contraste .barra-a11y button[aria-pressed="true"]{ background:#FFE600; color:#000; }
+body.alto-contraste .marca__nome, body.alto-contraste .pagina-titulo, body.alto-contraste .painel__titulo, body.alto-contraste .indicador__valor{ color:#fff; }
+body.alto-contraste input, body.alto-contraste select, body.alto-contraste textarea{ background:#000; color:#fff; border:2px solid #fff; }
+body.alto-contraste .btn-primario, body.alto-contraste .btn-gravar, body.alto-contraste .contador{ background:#FFE600; color:#000; border:2px solid #FFE600; }
+body.alto-contraste .btn-primario:hover{ background:#fff; border-color:#fff; box-shadow:none; }
+body.alto-contraste .btn-secundario, body.alto-contraste .btn-mini, body.alto-contraste .btn-conta, body.alto-contraste .btn-aba, body.alto-contraste .painel__acao{
+  background:#000; color:#FFE600; border:2px solid #FFE600; }
+body.alto-contraste .btn-conta--sair{ color:#FF9C93; border-color:#FF9C93; }
+body.alto-contraste .btn-secundario:hover, body.alto-contraste .btn-aba:hover, body.alto-contraste .btn-conta:hover{ background:#FFE600; color:#000; }
+body.alto-contraste .menu-usuario__avatar, body.alto-contraste .etapa__marcador, body.alto-contraste .link-local__n, body.alto-contraste .grafo__item .n{ background:#FFE600; color:#000; }
+body.alto-contraste .nivel-pilula, body.alto-contraste .selo-risco, body.alto-contraste .etiqueta-status{ color:#000; }
+body.alto-contraste .nivel-pilula.alto, body.alto-contraste .risco-alto .selo-risco{ background:#FF4D3D; }
+body.alto-contraste .nivel-pilula.medio{ background:#FFE600; }
+body.alto-contraste .nivel-pilula.baixo, body.alto-contraste .risco-baixo .selo-risco{ background:#00D94A; }
+body.alto-contraste .grade-checks label, body.alto-contraste .chip-leg, body.alto-contraste .tag{ background:#000; color:#fff; border:2px solid #fff; }
+body.alto-contraste .grade-checks label:has(input:checked){ background:#FFE600; color:#000; border-color:#FFE600; }
+body.alto-contraste .tabela-focos th{ background:#FFE600; color:#000; }
+body.alto-contraste .tabela-focos tbody tr:hover{ background:#222; }
+body.alto-contraste .grafo__no{ fill:#FFE600; stroke:#000; } body.alto-contraste .grafo__no.alarme{ fill:#FF4D3D; }
+body.alto-contraste .grafo__num{ fill:#000; } body.alto-contraste .grafo__espoca{ stroke:#fff; }
+body.alto-contraste .grafo__centro{ fill:#fff; } body.alto-contraste .grafo__centro-texto{ fill:#000; }
+body.alto-contraste .pino{ border-color:#fff; } body.alto-contraste .pino--medio{ background:#FFE600; color:#000; }
+body.alto-contraste .pino--expansao{ outline-color:#fff; }
+body.alto-contraste .leaflet-popup-content-wrapper, body.alto-contraste .leaflet-popup-tip{ background:#000; color:#fff; border:2px solid #fff; }
+body.alto-contraste .pop__grade div{ background:#222; }
+body.alto-contraste .status-conexao{ background:#000; color:#fff; border:2px solid #fff; }
+body.alto-contraste .resultado-ia, body.alto-contraste .bloco-ia{ background:#000; border:3px solid #fff; }
+body.alto-contraste .login-aviso, body.alto-contraste .mapa-erro{ background:#000; color:#fff; border:2px solid #FFE600; }
+body.alto-contraste .rodape, body.alto-contraste .rodape *{ color:#fff; }
+.nivel-pilula{ white-space:nowrap; }
+
+/* mapa mais calmo: suaviza as cores do OpenStreetMap */
+.leaflet-tile-pane{ filter:saturate(.55) contrast(.92) brightness(1.06); }
+body.alto-contraste .leaflet-tile-pane{ filter:grayscale(1) contrast(1.1); }
+
+/* ===================== LISTAS DE SELEÇÃO (sintomas) ===================== */
+.grade-checks--oculta{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+fieldset{ position:relative; }
+.seletor{ margin-bottom:0; }
+.seletor__marcados{ list-style:none; display:flex; flex-wrap:wrap; gap:.5rem; margin:.8rem 0 0; padding:0; }
+.seletor__marcados:empty::before{ content:"Nenhum selecionado"; color:var(--texto-suave); font-size:.9rem; }
+.chip-sel{
+  min-height:44px; display:inline-flex; align-items:center; gap:.6rem; padding:.3rem .55rem .3rem 1rem; border-radius:999px; cursor:pointer;
+  border:1.5px solid var(--azul-700); background:var(--azul-100); color:var(--azul-900); font-weight:600; font-size:.95rem;
+}
+.chip-sel__x{ width:1.6rem; height:1.6rem; border-radius:50%; background:var(--azul-700); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; line-height:1; }
+.chip-sel:hover{ background:#fff; }
+.seletor--alarme .chip-sel{ border-color:var(--vermelho-500); background:var(--vermelho-50); color:var(--vermelho-700); }
+.seletor--alarme .chip-sel__x{ background:var(--vermelho-500); }
+.campo-erro{ display:block; color:var(--vermelho-700); font-size:.85rem; font-weight:600; margin-top:.3rem; }
+.campo-erro:empty{ display:none; }
+body.alto-contraste .chip-sel, body.alto-contraste .seletor--alarme .chip-sel{ background:#000; color:#FFE600; border:2px solid #FFE600; }
+body.alto-contraste .chip-sel__x, body.alto-contraste .seletor--alarme .chip-sel__x{ background:#FFE600; color:#000; }
 </style>
 </head>
 <body>
 
 <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo principal</a>
+<div class="barra-a11y" role="region" aria-label="Acessibilidade">
+  <div class="barra-a11y__in">
+    <span class="barra-a11y__rotulo">Acessibilidade</span>
+    <div class="barra-a11y__grupo" role="group" aria-label="Tamanho do texto">
+      <button type="button" id="btnDiminuirFonte" aria-label="Diminuir o tamanho do texto">A−</button>
+      <button type="button" id="btnFonteNormal" aria-label="Tamanho normal do texto">A</button>
+      <button type="button" id="btnAumentarFonte" aria-label="Aumentar o tamanho do texto">A+</button>
+    </div>
+    <button type="button" class="barra-a11y__contraste" id="btnContraste" aria-pressed="false"><span class="ico-contraste" aria-hidden="true"></span>Alto contraste</button>
+  </div>
+</div>
 <div class="regiao-viva" role="status" aria-live="polite" id="regiao-viva"></div>
 
 <!-- ===================== LOGIN ===================== -->
 <div id="telaLogin" class="tela-login">
   <form class="login-cartao" id="formLogin" novalidate>
     <div class="marca" style="margin-bottom:1.5rem;">
-      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-        <circle cx="17" cy="17" r="16" stroke="#C97D4B" stroke-width="2"/>
-        <path d="M8 20c3-6 6-9 9-9s6 3 9 9" stroke="#1E5F63" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <circle cx="8" cy="20" r="1.8" fill="#3E8E63"/><circle cx="17" cy="11" r="1.8" fill="#3E8E63"/><circle cx="26" cy="20" r="1.8" fill="#3E8E63"/>
-      </svg>
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true"><circle cx="19" cy="19" r="18" fill="#EAF1FF" stroke="#1351B4" stroke-width="2"/><circle cx="19" cy="19" r="4" fill="#1351B4"/><circle cx="19" cy="7.5" r="2.6" fill="#168821"/><circle cx="29" cy="25" r="2.6" fill="#168821"/><circle cx="9" cy="25" r="2.6" fill="#168821"/><path d="M19 11v4M26.7 23.2l-3.4-2M11.3 23.2l3.4-2" stroke="#1351B4" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span class="marca__texto">
-        <span class="marca__nome" style="color:var(--rio-950);">MEDGRAPH-AM</span>
-        <span class="marca__legenda" style="color:var(--noite-700);">Acesso à plataforma</span>
+        <span class="marca__nome">MEDGRAPH-AM</span>
+        <span class="marca__legenda">Acesso à plataforma</span>
       </span>
     </div>
 
     <h1 class="login-titulo">Entrar na plataforma</h1>
-    <p class="login-descricao">Use o e-mail e a senha cadastrados pelo gestor. Seu perfil (ACS, Médico ou Gestor) vem do cadastro.</p>
+    <p class="login-descricao">Entre com seu e-mail e senha.</p>
 
     <div class="campo">
       <label for="loginEmail">E-mail</label>
@@ -490,7 +728,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 
     <details class="login-servidor" id="detalhesEsqueci">
       <summary>Esqueci minha senha</summary>
-      <p style="margin:.6rem 0 0;">Peça ao gestor da sua unidade para redefinir a sua senha. Ele gera uma senha temporária; entre com ela e troque em <strong>Minha senha</strong>. Se você é o gestor e esqueceu a sua, a redefinição é feita pelo responsável técnico do servidor.</p>
+      <p style="margin:.6rem 0 0;">Peça ao gestor da sua unidade para redefinir a sua senha. Entre com a senha temporária e troque em <strong>Minha senha</strong>.</p>
     </details>
     <details class="login-servidor" id="detalhesServidor">
       <summary>Servidor: <span class="login-servidor__atual" id="servidorAtual">—</span></summary>
@@ -499,7 +737,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
         <input type="url" id="servidorUrl" placeholder="https://seu-endereco.ngrok-free.app" autocomplete="off" spellcheck="false">
       </div>
       <button type="button" class="btn-secundario" id="btnSalvarServidor">Usar este servidor</button>
-      <p style="margin:.6rem 0 0;">Só informe um endereço que você conhece: ele receberá seu e-mail e sua senha.</p>
+      <p style="margin:.6rem 0 0;">Informe só um endereço que você conhece.</p>
     </details>
   </form>
 </div>
@@ -510,39 +748,32 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 <header class="cabecalho">
   <div class="cabecalho__barra">
     <div class="marca">
-      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-        <circle cx="17" cy="17" r="16" stroke="#C97D4B" stroke-width="2"/>
-        <path d="M8 20c3-6 6-9 9-9s6 3 9 9" stroke="#F6F3EC" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <circle cx="8" cy="20" r="1.8" fill="#3E8E63"/><circle cx="17" cy="11" r="1.8" fill="#3E8E63"/><circle cx="26" cy="20" r="1.8" fill="#3E8E63"/>
-        <circle cx="12.5" cy="15" r="1.4" fill="#F6F3EC"/><circle cx="21.5" cy="15" r="1.4" fill="#F6F3EC"/>
-      </svg>
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true"><circle cx="19" cy="19" r="18" fill="#EAF1FF" stroke="#1351B4" stroke-width="2"/><circle cx="19" cy="19" r="4" fill="#1351B4"/><circle cx="19" cy="7.5" r="2.6" fill="#168821"/><circle cx="29" cy="25" r="2.6" fill="#168821"/><circle cx="9" cy="25" r="2.6" fill="#168821"/><path d="M19 11v4M26.7 23.2l-3.4-2M11.3 23.2l3.4-2" stroke="#1351B4" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span class="marca__texto">
         <span class="marca__nome">MEDGRAPH-AM</span>
         <span class="marca__legenda" id="marcaLegenda">Triagem em campo</span>
       </span>
     </div>
 
-    <span class="sessao-usuario">
-      <span><span class="sessao-usuario__nome" id="sessaoNome">—</span><br><span class="sessao-usuario__perfil" id="sessaoPerfil">ACS</span></span>
-      <button type="button" class="btn-sair" id="btnUsuarios" hidden>Usuários</button>
-      <button type="button" class="btn-sair" id="btnFocos" hidden>Focos do vetor</button>
-      <button type="button" class="btn-sair" id="btnAuditoria" hidden>Auditoria</button>
-      <button type="button" class="btn-sair" id="btnMinhaSenha">Minha senha</button>
-      <button type="button" class="btn-sair" id="btnSair">Sair</button>
-    </span>
-
     <span class="status-conexao" id="statusConexao">
       <span class="status-conexao__ponto"></span>
       <span id="statusConexaoTexto">Verificando conexão…</span>
     </span>
-    <button type="button" class="btn-sync" id="btnSimularConexao" aria-pressed="false">Simular perda de conexão (demonstração)</button>
 
-    <div class="controles-a11y" role="group" aria-label="Controles de acessibilidade">
-      <button type="button" id="btnDiminuirFonte" aria-label="Diminuir tamanho da fonte">A−</button>
-      <button type="button" id="btnAumentarFonte" aria-label="Aumentar tamanho da fonte">A+</button>
-      <button type="button" id="btnContraste" aria-pressed="false" aria-label="Alternar modo de alto contraste">Alto contraste</button>
+    <div class="conta">
+      <span class="menu-usuario__avatar" id="menuAvatar" aria-hidden="true">?</span>
+      <span class="menu-usuario__texto"><span class="sessao-usuario__nome" id="sessaoNome">—</span><span class="sessao-usuario__perfil" id="sessaoPerfil">ACS</span></span>
+      <button type="button" class="btn-conta" id="btnMinhaSenha">Minha senha</button>
+      <button type="button" class="btn-conta btn-conta--sair" id="btnSair">Sair</button>
     </div>
   </div>
+  <nav class="abas" aria-label="Seções do gestor">
+    <div class="abas__lista">
+      <button type="button" class="btn-aba" id="btnUsuarios" hidden>Usuários</button>
+      <button type="button" class="btn-aba" id="btnFocos" hidden>Focos do vetor</button>
+      <button type="button" class="btn-aba" id="btnAuditoria" hidden>Auditoria</button>
+    </div>
+  </nav>
 </header>
 
 <main id="conteudo-principal" class="envoltorio">
@@ -550,7 +781,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   <!-- ===================== VISÃO 1 — ACS ===================== -->
   <div id="visaoACS" hidden>
     <h1 class="pagina-titulo" id="tituloACS" tabindex="-1">Registro de atendimento em campo</h1>
-    <p class="pagina-descricao">Preencha os dados da visita mesmo sem conexão. O registro é salvo neste aparelho e enviado ao servidor automaticamente quando a rede voltar.</p>
 
     <div class="layout">
       <section aria-labelledby="titulo-formulario">
@@ -563,12 +793,14 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <span class="etapa__marcador" aria-hidden="true">1</span>
               <div class="etapa__corpo">
                 <h3 class="etapa__titulo">Identificação do paciente</h3>
-                <p class="etapa__ajuda">Dados básicos e localização da visita domiciliar.</p>
 
                 <div class="campo-linha">
                   <div class="campo"><label for="nomePaciente">Nome do paciente</label><input type="text" id="nomePaciente" autocomplete="off"></div>
-                  <div class="campo"><label for="dataNascimento">Data de nascimento</label><input type="date" id="dataNascimento"></div>
+                  <div class="campo"><label for="dataNascimento">Data de nascimento</label><input type="text" id="dataNascimento" inputmode="numeric" autocomplete="bday" placeholder="dd/mm/aaaa" maxlength="10" aria-describedby="ajudaNasc"><span class="campo-erro" id="ajudaNasc" role="status"></span></div>
                   <div class="campo"><label for="sexoPaciente">Sexo (opcional)</label><select id="sexoPaciente"><option value="">Não informado</option><option value="F">Feminino</option><option value="M">Masculino</option><option value="O">Outro</option></select></div>
+                </div>
+                <div class="campo-linha">
+                  <div class="campo"><label for="diasSintomas">Há quantos dias começaram os sintomas? (opcional)</label><input type="number" id="diasSintomas" min="0" max="30" step="1" inputmode="numeric" placeholder="0 = começaram hoje"></div>
                 </div>
                 <div class="campo-linha">
                   <div class="campo"><label for="bairro">Bairro / Localidade</label><input type="text" id="bairro" autocomplete="off"></div>
@@ -589,7 +821,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <span class="etapa__marcador" aria-hidden="true">2</span>
               <div class="etapa__corpo">
                 <h3 class="etapa__titulo">Relato de sintomas por áudio</h3>
-                <p class="etapa__ajuda">Grave o relato do paciente (até 3 minutos). O áudio fica salvo neste aparelho e vai ao médico junto com o atendimento. O médico pode pedir a transcrição automática no servidor. Aqui, <strong>marque os sintomas</strong> da lista abaixo; se preferir, digite um resumo do relato e o sistema sugere as marcações (confira sempre).</p>
 
                 <div class="gravador" id="gravador">
                   <button type="button" class="btn-gravar" id="btnGravar" aria-pressed="false">
@@ -628,7 +859,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <span class="etapa__marcador" aria-hidden="true">3</span>
               <div class="etapa__corpo">
                 <h3 class="etapa__titulo">Foto do exantema cutâneo</h3>
-                <p class="etapa__ajuda">Tire uma foto da manifestação na pele ou escolha uma da galeria, se houver. A foto é reduzida e segue ao médico; ela ainda não é analisada pelo sistema.</p>
                 <div class="upload-foto">
                   <p style="margin:0 0 .3rem;font-size:.9rem;" id="statusFoto" role="status">Nenhuma imagem selecionada</p>
                   <div class="upload-foto__botoes">
@@ -645,12 +875,11 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <span class="etapa__marcador" aria-hidden="true">4</span>
               <div class="etapa__corpo">
                 <h3 class="etapa__titulo">Triagem de risco</h3>
-                <p class="etapa__ajuda">Estimativa de risco a partir dos sintomas marcados, para apoiar a triagem.</p>
                 <p class="status-modelo" id="statusModelo" role="status">Verificando o modelo de risco…</p>
 
                 <div class="acao-inferencia">
                   <button type="button" class="btn-primario" id="btnExecutarIA">Executar triagem</button>
-                  <span class="inferencia-nota" id="notaInferencia">Funciona mesmo sem conexão.</span>
+                  <span class="inferencia-nota" id="notaInferencia"></span>
                 </div>
 
                 <div class="resultado-ia" id="resultadoIA" aria-live="polite">
@@ -664,7 +893,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
                   <p class="resultado-ia__fontes" id="resultadoFontes"></p>
                   <ul class="resultado-ia__lista" id="listaSinais"></ul>
                   <p class="nota-prototipo" id="notaPrototipo"></p>
-                  <p class="resultado-ia__aviso">Este resultado é apenas um apoio à triagem. A confirmação diagnóstica é sempre do profissional de saúde habilitado.</p>
+                  <p class="resultado-ia__aviso">Apoio à triagem. A confirmação é sempre do profissional de saúde.</p>
                 </div>
                 <p class="resultado-ia__aviso-vazio" id="avisoVazio" hidden>Marque ao menos um sintoma (ou digite o relato) no passo 2 antes de executar a triagem.</p>
               </div>
@@ -674,7 +903,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <span class="etapa__marcador" aria-hidden="true">5</span>
               <div class="etapa__corpo">
                 <h3 class="etapa__titulo">Salvar atendimento</h3>
-                <p class="etapa__ajuda">O registro é salvo neste aparelho e entra na fila de envio.</p>
                 <button type="submit" class="btn-primario" id="btnSalvar">Salvar atendimento neste aparelho</button>
                 <p class="msg-status" id="msgSalvar" role="status"></p>
               </div>
@@ -690,7 +918,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
           <p class="resumo-sync" id="resumoSync" role="status"></p>
           <button type="button" class="btn-sync-claro" id="btnSincronizarAgora">Enviar agora</button>
           <ul class="lista-pendentes" id="listaPendentes"></ul>
-          <p class="painel__rodape">Atendimentos com sinais de alarme são enviados primeiro. Reenviar o mesmo registro não duplica nada.</p>
         </div>
       </aside>
     </div>
@@ -700,7 +927,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   <!-- ===================== VISÃO 2 — GESTOR ===================== -->
   <div id="visaoGestor" hidden>
     <h1 class="pagina-titulo" id="tituloGestor" tabindex="-1">Painel de Vigilância Epidemiológica</h1>
-    <p class="pagina-descricao">Atendimentos registrados pelos agentes, focos do vetor e tendência por localidade. Os dados vêm do servidor; as coordenadas são aproximadas para proteger o paciente.</p>
 
     <form class="filtros" aria-label="Filtros do painel" id="formFiltros">
       <div class="filtro-campo">
@@ -727,13 +953,15 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       <button type="button" class="btn-secundario" id="btnResumirPainel">Gerar resumo do período selecionado</button>
       <div class="assist-resultado" id="textoPainelIA" hidden></div>
       <p class="msg-status" id="msgPainelIA" role="status"></p>
-      <p class="nota-midia">Vão para o Google (Gemini) apenas números agregados do período (totais, localidades, sintomas). Nenhum dado de paciente. Cada uso fica na auditoria.</p>
+      <details class="saiba-mais"><summary>Privacidade</summary><p>Vão para o Google (Gemini) apenas números agregados do período (totais, localidades, sintomas). Nenhum dado de paciente. Cada uso fica na auditoria.</p></details>
     </div>
 
     <div class="painel" id="painelSintomas">
-      <h2 class="painel__titulo">Sintomas mais frequentes <span style="font-size:.78rem;font-weight:400;">(pacientes distintos, do grafo)</span></h2>
+      <h2 class="painel__titulo">Sintomas mais frequentes</h2>
       <div id="listaSintomas" aria-live="polite"><p class="msg-status">Carregando…</p></div>
       <p class="resumo-grafo" id="resumoGrafo"></p>
+      <button type="button" class="btn-secundario" id="btnReconstruirGrafo" style="margin-top:.7rem;">Atualizar grafo com os atendimentos</button>
+      <p class="msg-status" id="msgReconstruirGrafo" role="status"></p>
     </div>
 
     <div class="layout-vigilancia">
@@ -746,12 +974,11 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
         <div id="visaoMapa">
           <div id="mapaLeaflet" role="region" aria-label="Mapa de risco de Dengue por localidade. Há uma versão em tabela pelo botão Ver como tabela."></div>
           <div class="mapa-legenda">
-            <span><i style="background:#D6483C"></i> 30% ou mais dos atendimentos com alto risco</span>
-            <span><i style="background:#E8A33D"></i> 10% a 30%</span>
-            <span><i style="background:#3E8E63"></i> menos de 10%</span>
-            <span><i class="tracejado"></i> Vizinha de área em crescimento</span>
+            <span class="chip-leg chip-leg--alto"><i></i>Alto risco (30% ou mais)</span>
+            <span class="chip-leg chip-leg--medio"><i></i>Atenção (10% a 30%)</span>
+            <span class="chip-leg chip-leg--baixo"><i></i>Baixo (menos de 10%)</span>
+            <span class="chip-leg chip-leg--expansao"><i></i>Perto de área em crescimento</span>
           </div>
-          <p class="mapa-aviso">O tamanho do círculo é o número de atendimentos. A posição é o centro dos atendimentos da localidade.</p>
         </div>
 
         <div id="visaoTabela" style="display:none;">
@@ -776,7 +1003,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 
         <div class="painel acao-imprimir">
           <h2 class="painel__titulo">Ações de vigilância</h2>
-          <p style="font-size:.88rem;color:var(--noite-700);margin-top:0;">Gerar o relatório da tela para direcionar as equipes de combate ao vetor (use “Salvar como PDF” na impressão).</p>
           <button type="button" class="btn-secundario" id="btnExportarRelatorio">Imprimir / salvar PDF</button>
         </div>
       </div>
@@ -786,7 +1012,6 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   <!-- ===================== VISÃO 3 — MÉDICO ===================== -->
   <div id="visaoMedico" hidden>
     <h1 class="pagina-titulo" id="tituloMedico" tabindex="-1">Validação Médica de Atendimentos</h1>
-    <p class="pagina-descricao">Revise a triagem do protótipo, ouça o áudio e veja a foto quando houver, e registre a confirmação ou alteração do diagnóstico e o encaminhamento definitivo.</p>
 
     <div class="layout-validacao">
       <div class="painel" style="margin-bottom:0;">
@@ -800,19 +1025,20 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
         <p class="medico-vazio" id="medicoVazio" hidden>Nenhum atendimento pendente de validação no momento.</p>
 
         <div id="fichaConteudo">
-          <h2 class="painel__titulo" id="tituloFicha" style="margin-bottom:1rem;display:block;">Ficha do atendimento</h2>
+          <h2 class="painel__titulo" id="tituloFicha" style="display:block;">Ficha do atendimento</h2>
           <dl class="ficha-caso__grade">
             <div class="ficha-dado"><dt>Paciente</dt><dd id="fichaNome">—</dd></div>
             <div class="ficha-dado"><dt>Localidade</dt><dd id="fichaLocal">—</dd></div>
+            <div class="ficha-dado"><dt>Dias desde o início dos sintomas</dt><dd id="fichaDias">—</dd></div>
             <div class="ficha-dado"><dt>Data do atendimento</dt><dd id="fichaData">—</dd></div>
             <div class="ficha-dado"><dt>Agente (código)</dt><dd id="fichaAgente">—</dd></div>
           </dl>
 
-          <h3 style="font-family:var(--fonte-titulo);font-size:1.02rem;color:var(--rio-950);margin-bottom:.4rem;">Relato (texto digitado pelo agente)</h3>
-          <p id="fichaRelato" style="font-size:.92rem;background:var(--areia-50);border:1px solid var(--areia-200);border-radius:var(--raio);padding:.8rem 1rem;">—</p>
+          <h3>Relato do agente</h3>
+          <p id="fichaRelato">—</p>
 
           <div class="ficha-midia" id="fichaMidia" hidden>
-            <h3 style="font-family:var(--fonte-titulo);font-size:1.02rem;color:var(--rio-950);margin-bottom:.4rem;">Áudio e foto do atendimento</h3>
+            <h3>Áudio e foto</h3>
             <div id="fichaMidiaAudio" hidden>
               <button type="button" class="btn-secundario" id="btnCarregarAudio">Carregar áudio do relato</button>
               <audio id="playerAudio" controls hidden aria-label="Áudio do relato do paciente"></audio>
@@ -822,7 +1048,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <div class="bloco-transcricao" id="blocoTranscricao" hidden>
                 <h4>Transcrição automática (rascunho)</h4>
                 <p id="textoTranscricao" style="margin:0 0 .3rem;"></p>
-                <p class="nota-midia">Gerada no servidor (Whisper). Pode conter erros de sotaque, ruído ou termos regionais: confira ouvindo o áudio. Não altera o relato nem o risco calculado.</p>
+                <p class="nota-midia">Rascunho automático: confira ouvindo o áudio.</p>
               </div>
               <p class="msg-status" id="msgTranscricao" role="status"></p>
             </div>
@@ -837,7 +1063,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               </div>
             </div>
             <p class="msg-status" id="msgMidiaFicha" role="status"></p>
-            <p class="nota-midia">Dado sensível: cada abertura de áudio ou foto fica registrada na auditoria de acessos.</p>
+            <details class="saiba-mais"><summary>Privacidade</summary><p>Dado sensível: cada abertura de áudio ou foto fica registrada na auditoria de acessos.</p></details>
           </div>
 
           <div class="bloco-ia" id="blocoIA">
@@ -856,7 +1082,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
             <button type="button" class="btn-secundario" id="btnResumirFicha">Resumir esta ficha com IA</button>
             <div class="assist-resultado" id="textoResumoIA" hidden></div>
             <p class="msg-status" id="msgResumoIA" role="status"></p>
-            <p class="nota-midia">Vão para o Google (Gemini) só idade, sexo, sintomas, sinais de alarme e o relato, sem nome, endereço, telefone ou documento. Não é diagnóstico e não altera o nível de risco. Cada uso fica na auditoria.</p>
+            <details class="saiba-mais"><summary>Privacidade</summary><p>Vão para o Google (Gemini) só idade, sexo, sintomas, sinais de alarme e o relato, sem nome, endereço, telefone ou documento. Não é diagnóstico e não altera o nível de risco. Cada uso fica na auditoria.</p></details>
           </div>
 
           <form id="formValidacao">
@@ -895,7 +1121,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
               <button type="submit" class="btn-primario">Registrar parecer e validar atendimento</button>
               <span class="confirmacao-envio" id="confirmacaoEnvio" role="status"></span>
             </div>
-            <p class="resultado-ia__aviso">Indicativos de triagem são apoio à decisão; o parecer final é sempre do profissional habilitado.</p>
+            
           </form>
         </div>
       </div>
@@ -905,7 +1131,8 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 </main>
 
 <footer class="rodape">
-  MEDGRAPH-AM · Plataforma de triagem e vigilância epidemiológica da Dengue no Amazonas.
+  <button type="button" class="btn-demo" id="btnSimularConexao" aria-pressed="false">Simular perda de conexão (demonstração)</button>
+  <span>MEDGRAPH-AM · Triagem e vigilância da dengue no Amazonas</span>
 </footer>
 
 </div><!-- fim #appPrincipal -->
@@ -914,7 +1141,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 <dialog class="caixa" id="dlgSenha" aria-labelledby="dlgSenhaTitulo">
   <form id="formSenha" novalidate>
     <h2 id="dlgSenhaTitulo">Trocar minha senha</h2>
-    <p style="margin:0 0 .9rem;font-size:.9rem;">Use pelo menos 8 caracteres, com letras e números. Depois da troca você entra de novo com a senha nova.</p>
+    <p style="margin:0 0 .9rem;font-size:.9rem;">Mínimo de 8 caracteres, com letras e números.</p>
     <div class="campo"><label for="senhaAtual">Senha atual</label><input type="password" id="senhaAtual" autocomplete="current-password"></div>
     <div class="campo"><label for="senhaNova">Senha nova</label><input type="password" id="senhaNova" autocomplete="new-password"></div>
     <div class="campo"><label for="senhaNova2">Repita a senha nova</label><input type="password" id="senhaNova2" autocomplete="new-password"></div>
@@ -928,7 +1155,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 
 <dialog class="caixa" id="dlgUsuarios" aria-labelledby="dlgUsuariosTitulo">
   <h2 id="dlgUsuariosTitulo">Usuários do sistema</h2>
-  <p style="margin:0 0 .6rem;font-size:.88rem;">Só o gestor cadastra usuários e redefine senhas. A senha temporária aparece uma única vez: entregue por um canal seguro.</p>
+  
   <div class="campo-linha">
     <div class="campo"><label for="buscaUsuario">Buscar por nome ou e-mail</label><input type="search" id="buscaUsuario" autocomplete="off"></div>
     <div class="campo" style="align-self:end;"><button type="button" class="btn-secundario" id="btnNovoUsuario">+ Cadastrar usuário</button></div>
@@ -962,7 +1189,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 <dialog class="caixa" id="dlgFoco" aria-labelledby="dlgFocoTitulo">
   <form id="formFoco" novalidate>
     <h2 id="dlgFocoTitulo">Registrar foco do vetor (<em>Aedes aegypti</em>)</h2>
-    <p style="margin:0 0 .9rem;font-size:.9rem;">O foco é gravado no grafo e ligado à localidade. Ele passa a contar no painel.</p>
+    
     <div class="campo"><label for="focoTipo">Tipo de criadouro</label>
       <input type="text" id="focoTipo" list="listaCriadouros" autocomplete="off" placeholder="Ex.: Pneus a céu aberto">
       <datalist id="listaCriadouros"><option value="Pneus a céu aberto"><option value="Caixa d'água descoberta"><option value="Vasos de plantas"><option value="Calhas entupidas"><option value="Lixo acumulado"><option value="Tambores e baldes"></datalist></div>
@@ -985,8 +1212,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 
 <dialog class="caixa" id="dlgAuditoria" aria-labelledby="dlgAuditoriaTitulo" style="max-width:min(980px,96vw);">
   <div class="aud-corpo">
-  <h2 id="dlgAuditoriaTitulo">Auditoria de acessos (LGPD)</h2>
-  <p style="margin:0 0 .6rem;font-size:.88rem;">Quem consultou dados de saúde e quando. Somente leitura. Abrir esta tela também fica registrado.</p>
+  <h2 id="dlgAuditoriaTitulo">Auditoria de acessos</h2>
   <div class="campo-linha">
     <div class="campo"><label for="audPeriodo">Período</label>
       <select id="audPeriodo"><option value="1">Últimas 24 horas</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="0">Tudo</option></select></div>
@@ -1262,6 +1488,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     const perfil = sessao.usuario.perfil;
     $('sessaoNome').textContent = sessao.usuario.nome;
     $('sessaoPerfil').textContent = NOMES_PERFIL[perfil] || perfil;
+    $('menuAvatar').textContent = (sessao.usuario.nome || '?').trim().charAt(0).toUpperCase() || '?';
     $('marcaLegenda').textContent = LEGENDA_PERFIL[perfil] || '';
 
     visaoACS.hidden = perfil !== 'acs';
@@ -1566,6 +1793,101 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   $('audPeriodo').addEventListener('change', () => carregarAuditoria(false));
   $('audAcao').addEventListener('change', () => carregarAuditoria(false));
 
+  $('btnReconstruirGrafo').addEventListener('click', async () => {
+    const btn = $('btnReconstruirGrafo'), msg = $('msgReconstruirGrafo');
+    btn.disabled = true; msg.textContent = 'Atualizando o grafo… pode levar alguns segundos.';
+    try {
+      const r = await chamarApi('/grafo/reconstruir', { metodo: 'POST', timeoutMs: 120000 });
+      btn.disabled = false;
+      if (!r.ok){
+        if (r.status !== 401) msg.textContent = r.status === 503 ? 'O grafo está indisponível agora. Tente de novo em instantes.' : detalheDoErro(r.dados, 'Não foi possível atualizar o grafo.');
+        return;
+      }
+      const n = r.dados && r.dados.atendimentos_projetados;
+      msg.textContent = 'Grafo atualizado' + (typeof n === 'number' ? ' (' + n + ' atendimento(s) projetado(s)).' : '.');
+      anunciar('Grafo atualizado.');
+      carregarSintomasEGrafo();
+    } catch (erro) {
+      btn.disabled = false;
+      msg.textContent = erro instanceof ErroRede ? 'Sem conexão com o servidor.' : 'Erro inesperado.';
+    }
+  });
+
+  // ---- grafo circular dos sintomas (cada bolinha é um sintoma; o tamanho é o número de pacientes)
+  let ultimoGrafo = null;
+  function desenharGrafoSintomas(alvo, dados){
+    ultimoGrafo = { alvo: alvo, dados: dados };
+    alvo.textContent = '';
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (nome, attrs, pai) => {
+      const e = document.createElementNS(NS, nome);
+      Object.keys(attrs || {}).forEach((k) => e.setAttribute(k, attrs[k]));
+      if (pai) pai.appendChild(e);
+      return e;
+    };
+    const largo = window.innerWidth >= 760;
+    const maior = Math.max.apply(null, dados.map((x) => x.pacientes)) || 1;
+    const C = 220, R = 150;
+    const caixa = document.createElement('div'); caixa.className = 'grafo' + (largo ? ' grafo--largo' : '');
+    const svg = el('svg', { viewBox: largo ? '-170 -6 780 452' : '0 0 440 440', class: 'grafo__svg', role: 'img',
+      'aria-label': 'Grafo em círculo com os ' + dados.length + ' sintomas mais frequentes. A lista traz os mesmos dados.' }, caixa);
+    const geo = dados.map((x, i) => {
+      const ang = -Math.PI / 2 + (2 * Math.PI * i) / dados.length;
+      const r = (largo ? 16 : 18) + (largo ? 18 : 22) * Math.sqrt(x.pacientes / maior);
+      return { ang: ang, r: r, x: C + R * Math.cos(ang), y: C + R * Math.sin(ang) };
+    });
+    geo.forEach((p) => el('line', { x1: C, y1: C, x2: p.x.toFixed(1), y2: p.y.toFixed(1), class: 'grafo__espoca' }, svg));
+    el('circle', { cx: C, cy: C, r: 50, class: 'grafo__centro' }, svg);
+    const t = el('text', { x: C, y: C, class: 'grafo__centro-texto', 'dominant-baseline': 'central' }, svg); t.textContent = 'Pacientes';
+
+    const legenda = document.createElement('ul'); legenda.className = 'grafo__legenda' + (largo ? ' somente-leitor' : '');
+    const nos = [], itens = [], rotulos = [];
+    dados.forEach((x, i) => {
+      const p = geo[i];
+      const g = el('g', { class: 'grafo__grupo', style: 'animation-delay:' + (i * 55) + 'ms' }, svg);
+      const no = el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: p.r.toFixed(1), class: 'grafo__no' + (x.sinal_alarme ? ' alarme' : '') }, g);
+      const tit = el('title', {}, no); tit.textContent = x.sintoma + ': ' + x.pacientes + ' paciente(s)' + (x.sinal_alarme ? ' (sinal de alarme)' : '');
+      const n = el('text', { x: p.x.toFixed(1), y: p.y.toFixed(1), class: 'grafo__num' }, g);
+      n.textContent = largo ? String(x.pacientes) : String(i + 1);
+      nos.push(no);
+
+      if (largo){
+        const cos = Math.cos(p.ang), sen = Math.sin(p.ang);
+        const dist = p.r + 12;
+        const lx = p.x + (Math.abs(cos) > 0.3 ? Math.sign(cos) * dist : 0);
+        const ly = p.y + (Math.abs(cos) > 0.3 ? 0 : Math.sign(sen) * (dist + (sen > 0 ? 10 : 0)));
+        const ancora = cos > 0.3 ? 'start' : cos < -0.3 ? 'end' : 'middle';
+        const rot = el('text', { x: lx.toFixed(1), y: (ly - 2).toFixed(1), class: 'grafo__rotulo', 'text-anchor': ancora }, g);
+        const l1 = el('tspan', { class: 'grafo__rotulo-nome', x: lx.toFixed(1) }, rot); l1.textContent = x.sintoma;
+        const l2 = el('tspan', { class: 'grafo__rotulo-qtd' + (x.sinal_alarme ? ' alarme' : ''), x: lx.toFixed(1), dy: '1.25em' }, rot);
+        l2.textContent = x.pacientes + ' pacientes' + (x.sinal_alarme ? ' · sinal de alarme' : '');
+        rotulos.push(rot);
+      }
+
+      const li = document.createElement('li'); li.className = 'grafo__item' + (x.sinal_alarme ? ' alarme' : '');
+      const num = document.createElement('span'); num.className = 'n'; num.textContent = String(i + 1);
+      const nome = document.createElement('span'); nome.className = 'nome'; nome.textContent = x.sintoma;
+      if (x.sinal_alarme){ const a = document.createElement('span'); a.className = 'alerta'; a.textContent = ' · alarme'; nome.appendChild(a); }
+      const qtd = document.createElement('span'); qtd.className = 'qtd'; qtd.textContent = String(x.pacientes);
+      li.appendChild(num); li.appendChild(nome); li.appendChild(qtd);
+      legenda.appendChild(li); itens.push(li);
+
+      const ligar = (on) => { no.classList.toggle('ativo', on); li.classList.toggle('ativo', on); caixa.classList.toggle('grafo--tem-ativo', on); };
+      li.addEventListener('mouseenter', () => ligar(true)); li.addEventListener('mouseleave', () => ligar(false));
+      no.addEventListener('mouseenter', () => ligar(true)); no.addEventListener('mouseleave', () => ligar(false));
+    });
+    caixa.appendChild(legenda);
+    alvo.appendChild(caixa);
+  }
+  (function(){
+    let larguraAnterior = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (!ultimoGrafo || !document.body.contains(ultimoGrafo.alvo)) return;
+      if ((larguraAnterior >= 760) !== (window.innerWidth >= 760)) desenharGrafoSintomas(ultimoGrafo.alvo, ultimoGrafo.dados);
+      larguraAnterior = window.innerWidth;
+    });
+  })();
+
   // ---- sintomas mais frequentes e resumo do grafo (dentro do painel do gestor)
   async function carregarSintomasEGrafo(){
     const lista = $('listaSintomas'), resumo = $('resumoGrafo');
@@ -1579,17 +1901,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       } else if (!(s.dados || []).length){
         const p = document.createElement('p'); p.className = 'msg-status'; p.textContent = 'Ainda não há sintomas registrados no grafo.'; lista.appendChild(p);
       } else {
-        const maior = Math.max.apply(null, s.dados.map((x) => x.pacientes)) || 1;
-        s.dados.forEach((x) => {
-          const linha = document.createElement('div'); linha.className = 'barra-sintoma' + (x.sinal_alarme ? ' barra-sintoma__alarme' : '');
-          const nome = document.createElement('span'); nome.textContent = x.sintoma;
-          if (x.sinal_alarme){ const t = document.createElement('span'); t.className = 'tag-alarme'; t.textContent = 'sinal de alarme'; nome.appendChild(t); }
-          const trilho = document.createElement('div'); trilho.className = 'barra-sintoma__trilho';
-          const pre = document.createElement('div'); pre.className = 'barra-sintoma__preenche'; pre.style.width = Math.max(3, Math.round(100 * x.pacientes / maior)) + '%';
-          trilho.appendChild(pre);
-          const n = document.createElement('span'); n.textContent = String(x.pacientes);
-          linha.appendChild(nome); linha.appendChild(trilho); linha.appendChild(n); lista.appendChild(linha);
-        });
+        desenharGrafoSintomas(lista, s.dados);
       }
       if (g.ok && g.dados){
         const soma = (o) => Object.keys(o || {}).reduce((t, k) => t + (Number(o[k]) || 0), 0);
@@ -1600,25 +1912,31 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     }
   }
 
-  /* ---------- Fonte e contraste ---------- */
+  /* ---------- Fonte e contraste (a escolha fica guardada neste aparelho) ---------- */
   let escala = 1;
   const MIN_ESCALA = 0.85, MAX_ESCALA = 1.4, PASSO = 0.1;
-  $('btnAumentarFonte').addEventListener('click', () => {
-    escala = Math.min(MAX_ESCALA, escala + PASSO);
-    document.documentElement.style.setProperty('--fs-scale', escala.toFixed(2));
-    anunciar('Fonte aumentada.');
-  });
-  $('btnDiminuirFonte').addEventListener('click', () => {
-    escala = Math.max(MIN_ESCALA, escala - PASSO);
-    document.documentElement.style.setProperty('--fs-scale', escala.toFixed(2));
-    anunciar('Fonte diminuída.');
-  });
+  const CH_A11Y = 'medgraph.a11y';
+  const lerA11y = () => { try { return JSON.parse(localStorage.getItem(CH_A11Y)) || {}; } catch (e) { return {}; } };
+  const gravarA11y = () => { try { localStorage.setItem(CH_A11Y, JSON.stringify({ escala: escala, contraste: document.body.classList.contains('alto-contraste') })); } catch (e) { /* sem armazenamento: tudo bem */ } };
   const btnContraste = $('btnContraste');
-  btnContraste.addEventListener('click', () => {
-    const ativo = document.body.classList.toggle('alto-contraste');
+  function aplicarEscala(){ document.documentElement.style.setProperty('--fs-scale', escala.toFixed(2)); }
+  function aplicarContraste(ativo){
+    document.body.classList.toggle('alto-contraste', ativo);
     btnContraste.setAttribute('aria-pressed', String(ativo));
-    anunciar(ativo ? 'Modo de alto contraste ativado.' : 'Modo de alto contraste desativado.');
+  }
+  $('btnAumentarFonte').addEventListener('click', () => { escala = Math.min(MAX_ESCALA, +(escala + PASSO).toFixed(2)); aplicarEscala(); gravarA11y(); anunciar('Texto maior.'); });
+  $('btnDiminuirFonte').addEventListener('click', () => { escala = Math.max(MIN_ESCALA, +(escala - PASSO).toFixed(2)); aplicarEscala(); gravarA11y(); anunciar('Texto menor.'); });
+  $('btnFonteNormal').addEventListener('click', () => { escala = 1; aplicarEscala(); gravarA11y(); anunciar('Texto no tamanho normal.'); });
+  btnContraste.addEventListener('click', () => {
+    const ativo = !document.body.classList.contains('alto-contraste');
+    aplicarContraste(ativo); gravarA11y();
+    anunciar(ativo ? 'Alto contraste ligado.' : 'Alto contraste desligado.');
   });
+  (function(){
+    const g = lerA11y();
+    if (typeof g.escala === 'number' && g.escala >= MIN_ESCALA && g.escala <= MAX_ESCALA){ escala = g.escala; aplicarEscala(); }
+    if (g.contraste) aplicarContraste(true);
+  })();
 
   /* =====================================================================
      ACS — FILA LOCAL E SINCRONIZAÇÃO
@@ -1721,6 +2039,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       municipio: i.municipio || undefined,
       nivel_risco: i.nivel_risco,
       resultado: i.resultado,
+      dias_sintomas: (i.dias_sintomas === null || i.dias_sintomas === undefined) ? undefined : i.dias_sintomas,
     };
   }
   function resumirEnviado(i){
@@ -2069,11 +2388,15 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     });
     return { marcadas, desconhecidos };
   }
-  function pontuar(modelo, sintomas, idadeAnos, sexo){
+  function pontuar(modelo, sintomas, idadeAnos, sexo, diasSintomas){
     const marcadas = sintomasParaVariaveis(modelo, sintomas).marcadas;
     let z = Number(modelo.intercepto);
     modelo.features.forEach((f) => {
-      if (f.tipo === 'numerica'){
+      if (f.tipo === 'numerica' && f.nome === 'dias_sintomas'){
+        const padraoDias = modelo.dias_padrao !== undefined && modelo.dias_padrao !== null ? modelo.dias_padrao : f.media;
+        const dias = (diasSintomas !== null && diasSintomas !== undefined && diasSintomas >= 0 && diasSintomas <= 30) ? Math.min(diasSintomas, 14) : padraoDias;   // o treino limita a 14
+        z += f.coef * ((dias - f.media) / f.desvio);
+      } else if (f.tipo === 'numerica'){
         const padrao = modelo.idade_padrao_anos !== undefined && modelo.idade_padrao_anos !== null ? modelo.idade_padrao_anos : f.media;
         const idade = (idadeAnos !== null && idadeAnos !== undefined && idadeAnos >= 0 && idadeAnos <= 110) ? idadeAnos : padrao;
         z += f.coef * ((idade - f.media) / f.desvio);
@@ -2104,6 +2427,44 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   const FONTE_REGRA = 'regra-palavras-chave-v1';
   let modeloRisco = null;
 
+  // ---- sintomas, condições e sinais de alarme escolhidos em uma lista (as caixas de marcar seguem existindo, escondidas)
+  const seletores = [];
+  function sincSeletores(){ seletores.forEach((f) => f()); }
+  function criarSeletor(idGrade, rotulo, alarme){
+    const grade = $(idGrade); if (!grade) return;
+    grade.classList.add('grade-checks--oculta');
+    const caixa = document.createElement('div'); caixa.className = 'seletor campo' + (alarme ? ' seletor--alarme' : '');
+    const sel = document.createElement('select'); sel.setAttribute('aria-label', rotulo);
+    const lista = document.createElement('ul'); lista.className = 'seletor__marcados'; lista.setAttribute('aria-live', 'polite');
+    caixa.appendChild(sel); caixa.appendChild(lista);
+    grade.parentNode.insertBefore(caixa, grade);
+    const render = () => {
+      const caixas = Array.from(grade.querySelectorAll('input[type=checkbox]'));
+      const faltam = caixas.filter((c) => !c.checked);
+      sel.textContent = '';
+      sel.appendChild(new Option(faltam.length ? rotulo : 'Tudo selecionado', ''));
+      faltam.forEach((c) => sel.appendChild(new Option(c.parentNode.textContent.trim(), c.id)));
+      sel.disabled = !faltam.length;
+      lista.textContent = '';
+      caixas.filter((c) => c.checked).forEach((c) => {
+        const nome = c.parentNode.textContent.trim();
+        const li = document.createElement('li');
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'chip-sel';
+        b.setAttribute('aria-label', 'Remover ' + nome);
+        const t = document.createElement('span'); t.textContent = nome;
+        const x = document.createElement('span'); x.className = 'chip-sel__x'; x.setAttribute('aria-hidden', 'true'); x.textContent = '×';
+        b.appendChild(t); b.appendChild(x);
+        b.addEventListener('click', () => { c.checked = false; c.dispatchEvent(new Event('change', { bubbles: true })); render(); sel.focus(); });
+        li.appendChild(b); lista.appendChild(li);
+      });
+    };
+    sel.addEventListener('change', () => {
+      const c = sel.value ? $(sel.value) : null; if (!c) return;
+      c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true })); render(); sel.focus();
+    });
+    seletores.push(render); render();
+  }
+
   function marcadosNaTela(){
     return Array.from(document.querySelectorAll('#gradeSintomas input:checked, #gradeFatores input:checked')).map((c) => ({ nome: c.dataset.nome, rotulo: c.dataset.rotulo, grupo: c.dataset.grupo }));
   }
@@ -2124,6 +2485,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       l.appendChild(c); l.appendChild(t); (grupo === 'fator' ? gFat : gSint).appendChild(l);
     });
     $('campoFatores').hidden = !gFat.children.length;
+    sincSeletores();
   }
   function montarAlarmes(){
     const grade = $('gradeAlarme'); grade.textContent = '';
@@ -2133,13 +2495,14 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       const t = document.createElement('span'); t.textContent = a.rotulo;
       l.appendChild(c); l.appendChild(t); grade.appendChild(l);
     });
+    sincSeletores();
   }
   function atualizarStatusModelo(){
     const el = $('statusModelo'); if (!el) return;
     el.classList.toggle('teste', !!(modeloRisco && modeloRisco.sintetico));
     if (!modeloRisco) el.textContent = 'Modelo de IA ainda não disponível neste aparelho: a triagem usa só os sinais de alarme marcados (regra simples).';
     else if (modeloRisco.sintetico) el.textContent = 'ATENÇÃO: modelo de TESTE (dados sintéticos), sem valor clínico. Versão ' + modeloRisco.versao + '.';
-    else el.textContent = 'Modelo de risco carregado (versão ' + modeloRisco.versao + '). Funciona sem internet.';
+    else el.textContent = 'Modelo de risco carregado (versão ' + modeloRisco.versao + ').';
   }
   function usarModelo(m){
     modeloRisco = m;
@@ -2167,6 +2530,10 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   }
   window.addEventListener('online', () => { atualizarModeloDoServidor(); });
   montarAlarmes(); montarChecklist(); atualizarStatusModelo();
+  criarSeletor('gradeSintomas', 'Escolha um sintoma para adicionar…', false);
+  criarSeletor('gradeFatores', 'Escolha uma condição para adicionar…', false);
+  criarSeletor('gradeAlarme', 'Escolha um sinal de alarme para adicionar…', true);
+  $('formTriagem').addEventListener('reset', () => window.setTimeout(sincSeletores, 0));
 
   // Sugere marcações a partir do texto do relato (ignora o que vem depois de "sem", "não", "nega"...). O agente confere.
   function sugerirDoRelato(texto){
@@ -2182,7 +2549,29 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       const c = $('sint_' + SINONIMOS[chave]); if (c) c.checked = true;
     });
     ALARMES.forEach((a) => { if (semNegacao(a.re)){ const c = $('alarme_' + a.id); if (c) c.checked = true; } });
+    sincSeletores();
   }
+  // ---- data de nascimento digitada (dd/mm/aaaa), no lugar do seletor do navegador
+  function dataNascISO(){
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec($('dataNascimento').value.trim());
+    if (!m) return '';
+    const d = +m[1], mo = +m[2], a = +m[3], dt = new Date(a, mo - 1, d);
+    if (dt.getFullYear() !== a || dt.getMonth() !== mo - 1 || dt.getDate() !== d || a < 1900 || dt > new Date()) return '';
+    return m[3] + '-' + m[2] + '-' + m[1];
+  }
+  (function(){
+    const campo = $('dataNascimento'), aviso = $('ajudaNasc');
+    campo.addEventListener('input', () => {
+      let v = campo.value.trim();
+      const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+      if (iso) v = iso[3] + iso[2] + iso[1];
+      const n = v.replace(/\D/g, '').slice(0, 8);
+      campo.value = n.length > 4 ? n.slice(0, 2) + '/' + n.slice(2, 4) + '/' + n.slice(4) : n.length > 2 ? n.slice(0, 2) + '/' + n.slice(2) : n;
+      const ruim = campo.value.length === 10 && !dataNascISO();
+      aviso.textContent = ruim ? 'Data inválida. Use dia/mês/ano, por exemplo 25/03/1985.' : '';
+      campo.setAttribute('aria-invalid', String(ruim));
+    });
+  })();
   function idadeEmAnos(iso){
     if (!iso) return null;
     const n = new Date(iso + 'T00:00:00'); if (isNaN(n)) return null;
@@ -2190,8 +2579,14 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     if (hoje.getMonth() < n.getMonth() || (hoje.getMonth() === n.getMonth() && hoje.getDate() < n.getDate())) a -= 1;
     return a >= 0 ? a : null;
   }
+  function diasInformados(){
+    const v = $('diasSintomas').value.trim();
+    if (!/^\d{1,2}$/.test(v)) return null;
+    const n = Number(v);
+    return n >= 0 && n <= 30 ? n : null;
+  }
   function assinaturaTriagem(){
-    return JSON.stringify([$('relatoTexto').value.trim(), marcadosNaTela().map((m) => m.nome), alarmesNaTela().map((a) => a.id), $('dataNascimento').value, $('sexoPaciente').value]);
+    return JSON.stringify([$('relatoTexto').value.trim(), marcadosNaTela().map((m) => m.nome), alarmesNaTela().map((a) => a.id), $('dataNascimento').value, $('sexoPaciente').value, $('diasSintomas').value.trim()]);
   }
 
   let ultimaInferencia = null;
@@ -2215,14 +2610,15 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     $('notaInferencia').textContent = 'Processando localmente…';
 
     window.setTimeout(() => {
-      const idade = idadeEmAnos($('dataNascimento').value);
+      const idade = idadeEmAnos(dataNascISO());
       const sexo = $('sexoPaciente').value;
+      const dias = diasInformados();
       const alarme = alarmes.length > 0;
       const sinais = alarmes.map((a) => a.nome);
       let score, nivel, versao, textoNivel, pct = '—', rotulo, nota;
       const evidencias = [];
       if (modeloRisco){
-        score = pontuar(modeloRisco, marcados.map((m) => m.nome), idade, sexo);
+        score = pontuar(modeloRisco, marcados.map((m) => m.nome), idade, sexo, dias);
         const acima = score >= modeloRisco.limiar;
         nivel = alarme ? 'ALTO' : (acima ? 'MODERADO' : 'BAIXO');
         versao = (modeloRisco.versao || 'modelo') + (modeloRisco.sintetico ? '-sint' : '');
@@ -2238,6 +2634,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
         evidencias.push('Pontuação ' + pct + (acima ? ' (acima' : ' (abaixo') + ' do limiar de ' + (modeloRisco.limiar * 100).toFixed(modeloRisco.limiar < 0.1 ? 1 : 0).replace('.', ',') + '% do modelo)');
         if (typeof modeloRisco.taxa_base === 'number') evidencias.push('Nos dados de treino, ' + (modeloRisco.taxa_base * 100).toFixed(1).replace('.', ',') + '% dos casos tiveram esse desfecho.');
         if (idade === null) evidencias.push('Data de nascimento não informada: o modelo usou a idade típica dos casos.');
+        if (dias === null && modeloRisco.features.some((f) => f.nome === 'dias_sintomas')) evidencias.push('Dias desde o início dos sintomas não informados: o modelo usou o valor típico dos casos.');
       } else {
         score = alarme ? 0.78 : 0.55;           // valores fixos da regra: NÃO são probabilidade (por isso não aparecem na tela)
         nivel = alarme ? 'ALTO' : 'MODERADO';
@@ -2266,7 +2663,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       evidencias.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
       res.classList.add('visivel');
       btnExecutarIA.disabled = false;
-      $('notaInferencia').textContent = 'Triagem concluída no aparelho.';
+      $('notaInferencia').textContent = '';
       const sintomasEnvio = marcados.filter((m) => m.grupo !== 'fator').map((m) => m.rotulo).concat(sinais);
       ultimaInferencia = {
         assin: assinaturaTriagem(), relato, sintomas: sintomasEnvio, nivel_risco: nivel,
@@ -2308,9 +2705,10 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   async function salvarAtendimento(nome){
     const agora = new Date();
     const paciente = { id: novoUuid(), nome };
-    const nasc = $('dataNascimento').value;
+    const nasc = dataNascISO();
     if (nasc) paciente.data_nascimento = nasc;
     if ($('sexoPaciente').value) paciente.sexo = $('sexoPaciente').value;
+    const diasItem = diasInformados();
 
     const item = {
       id: novoUuid(),
@@ -2327,6 +2725,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
       resultado: ultimaInferencia.resultado,
       estado: 'pendente',
     };
+    if (diasItem !== null) item.dias_sintomas = diasItem;
     // Áudio e foto primeiro: se não couberem no aparelho, o atendimento não é salvo pela metade.
     const guardados = [];
     const anexos = ['audio', 'foto'].filter((c) => midiaAtual[c]);
@@ -2358,7 +2757,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     ultimaInferencia = null;
     $('resultadoIA').classList.remove('visivel', 'risco-alto', 'risco-baixo');
     $('avisoVazio').hidden = true;
-    $('notaInferencia').textContent = 'Funciona mesmo sem conexão.';
+    $('notaInferencia').textContent = '';
     montarChecklist();
 
     if (podeTentar()) window.setTimeout(() => sincronizar(false), 300);
@@ -2527,7 +2926,8 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     if (r.status === 502) return 'O assistente não conseguiu responder. Tente de novo.';
     return detalheDoErro(r.dados, padrao);
   }
-  async function pedirAoAssistente(btn, msg, caminho, json, aoSucesso, idAtual){
+  async function pedirAoAssistente(btn, msg, caminho, json, aoSucesso, idAtual, idCaixa){
+    if (idCaixa){ const cx = $(idCaixa); cx.hidden = true; cx.textContent = ''; }   // some o rascunho antigo antes de pedir outro
     btn.disabled = true; msg.textContent = 'Consultando o assistente… pode levar alguns segundos.';
     try {
       const r = await chamarApi(caminho, { metodo: 'POST', json: json, timeoutMs: 90000 });
@@ -2545,18 +2945,18 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
   $('btnResumirFicha').addEventListener('click', () => {
     const id = casoSelecionadoId; if (!id) return;
     pedirAoAssistente($('btnResumirFicha'), $('msgResumoIA'), '/atendimentos/' + id + '/assistente/resumo', undefined,
-      (d) => mostrarRascunhoIA('textoResumoIA', d.resumo || '(sem texto)', d.modelo), id);
+      (d) => mostrarRascunhoIA('textoResumoIA', d.resumo || '(sem texto)', d.modelo), id, 'textoResumoIA');
   });
   $('cienteFotoIA').addEventListener('change', () => { $('btnDescreverFoto').disabled = !$('cienteFotoIA').checked; });
   $('btnDescreverFoto').addEventListener('click', () => {
     const id = casoSelecionadoId; if (!id || !$('cienteFotoIA').checked) return;
     pedirAoAssistente($('btnDescreverFoto'), $('msgFotoIA'), '/atendimentos/' + id + '/assistente/foto', { ciente: true },
-      (d) => mostrarRascunhoIA('textoFotoIA', d.descricao || '(sem texto)', d.modelo), id);
+      (d) => mostrarRascunhoIA('textoFotoIA', d.descricao || '(sem texto)', d.modelo), id, 'textoFotoIA');
   });
   $('btnResumirPainel').addEventListener('click', () => {
     const dias = Number($('filtroPeriodo').value) || 30;
     pedirAoAssistente($('btnResumirPainel'), $('msgPainelIA'), '/api/v1/assistente/painel', { dias: dias },
-      (d) => mostrarRascunhoIA('textoPainelIA', d.resumo || '(sem texto)', d.modelo));
+      (d) => mostrarRascunhoIA('textoPainelIA', d.resumo || '(sem texto)', d.modelo), undefined, 'textoPainelIA');
   });
 
   function selecionarCaso(id){
@@ -2574,6 +2974,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     $('tituloFicha').textContent = 'Ficha do atendimento — ' + a.paciente.nome;
     $('fichaNome').textContent = a.paciente.nome;
     $('fichaLocal').textContent = [a.bairro, a.municipio].filter(Boolean).join(', ') || '—';
+    $('fichaDias').textContent = (a.dias_sintomas === null || a.dias_sintomas === undefined) ? 'não informado' : a.dias_sintomas + (a.dias_sintomas === 1 ? ' dia' : ' dias');
     $('fichaData').textContent = dataLegivel(a.data_hora);
     $('fichaAgente').textContent = String(a.agente_id).slice(0, 8);
     $('fichaRelato').textContent = a.relato_texto || 'Nenhum relato informado.';
@@ -2659,7 +3060,7 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     const i = nomeLocalidade.lastIndexOf(', ');
     return i >= 0 ? nomeLocalidade.slice(i + 2) : nomeLocalidade;
   };
-  const corRisco = (p) => (p >= 0.3 ? '#D6483C' : p >= 0.1 ? '#E8A33D' : '#3E8E63');
+  const corRisco = (p) => (p >= 0.3 ? '#D9200A' : p >= 0.1 ? '#E0A800' : '#168821');
   const ROTULO_TENDENCIA = { CRESCENTE:'Crescente', ESTAVEL:'Estável', DECRESCENTE:'Em queda', DADOS_INSUFICIENTES:'Poucos dados' };
   const ROTULO_EXPANSAO = { NENHUM:'—', BAIXO:'Baixo', MEDIO:'Médio', ALTO:'Alto' };
 
@@ -2716,6 +3117,27 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
 
   function celula(tr, texto){ const td = document.createElement('td'); td.textContent = texto; tr.appendChild(td); return td; }
 
+  const ROTULO_TEND_SETA = { CRESCENTE:'↑ Crescente', ESTAVEL:'→ Estável', DECRESCENTE:'↓ Em queda', DADOS_INSUFICIENTES:'Poucos dados' };
+  const classeRisco = (p) => (p >= 0.3 ? 'alto' : p >= 0.1 ? 'medio' : 'baixo');
+  const ROTULO_RISCO = { alto:'Alto risco', medio:'Atenção', baixo:'Baixo' };
+  const temExpansao = (l) => !!(l.proj && l.proj.risco_de_expansao && l.proj.risco_de_expansao !== 'NENHUM');
+  const pilula = (texto, classe) => { const p = document.createElement('span'); p.className = 'nivel-pilula ' + classe; p.textContent = texto; return p; };
+  const etiqueta = (texto, classe) => { const p = document.createElement('span'); p.className = 'tag tag--' + classe; p.textContent = texto; return p; };
+  const marcadores = new Map();
+
+  function mostrarMapa(){
+    if ($('visaoMapa').style.display === 'none') btnAlternarMapa.click();
+  }
+  function focarLocalidade(l){
+    mostrarMapa();
+    $('visaoMapa').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const m = marcadores.get(l.chave);
+    if (mapa && m){
+      mapa.setView([l.lat, l.lon], Math.max(mapa.getZoom(), 13), { animate: true });
+      window.setTimeout(() => m.openPopup(), 250);
+    }
+  }
+
   function desenharPainelGestor(){
     const lista = filtradas();
     const soma = (f) => lista.reduce((s, l) => s + f(l), 0);
@@ -2728,25 +3150,36 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     const corpo = $('corpoTabelaLocalidades'); corpo.innerHTML = '';
     lista.slice().sort((a, b) => b.total - a.total).forEach((l) => {
       const tr = document.createElement('tr');
-      celula(tr, l.nome); celula(tr, String(l.total)); celula(tr, String(l.alto));
+      const nome = celula(tr, l.nome); nome.className = 'col-nome';
+      celula(tr, String(l.total));
+      const tdAlto = document.createElement('td'); tdAlto.appendChild(pilula(l.alto + ' (' + Math.round(l.proporcao * 100) + '%)', classeRisco(l.proporcao))); tr.appendChild(tdAlto);
       celula(tr, l.focos == null ? '—' : String(l.focos));
-      celula(tr, l.proj ? ROTULO_TENDENCIA[l.proj.tendencia] : '—');
+      const tdT = document.createElement('td');
+      if (l.proj) tdT.appendChild(etiqueta(ROTULO_TEND_SETA[l.proj.tendencia] || '—', (l.proj.tendencia || 'x').toLowerCase())); else tdT.textContent = '—';
+      tr.appendChild(tdT);
       celula(tr, l.proj && l.proj.casos_previstos.length ? String(l.proj.casos_previstos[0]) : '—');
-      celula(tr, l.proj ? ROTULO_EXPANSAO[l.proj.risco_de_expansao] : '—');
+      const tdE = document.createElement('td');
+      if (l.proj && temExpansao(l)) tdE.appendChild(etiqueta(ROTULO_EXPANSAO[l.proj.risco_de_expansao], 'expansao')); else tdE.textContent = '—';
+      tr.appendChild(tdE);
       corpo.appendChild(tr);
     });
     if (!lista.length){ const tr = document.createElement('tr'); const td = celula(tr, 'Sem dados no período.'); td.colSpan = 7; corpo.appendChild(tr); }
 
-    // prioridades: mais atendimentos de alto risco
+    // prioridades: mais atendimentos de alto risco (clicar leva ao mapa)
     const pri = $('corpoTabelaPrioridades'); pri.innerHTML = '';
-    lista.filter((l) => l.alto > 0).sort((a, b) => b.alto - a.alto || b.proporcao - a.proporcao).slice(0, 5).forEach((l) => {
+    lista.filter((l) => l.alto > 0).sort((a, b) => b.alto - a.alto || b.proporcao - a.proporcao).slice(0, 5).forEach((l, i) => {
       const tr = document.createElement('tr');
-      celula(tr, l.nome);
+      const td0 = document.createElement('td');
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'link-local';
+      const n = document.createElement('span'); n.className = 'link-local__n'; n.textContent = String(i + 1); n.setAttribute('aria-hidden', 'true');
+      const t = document.createElement('span'); t.textContent = l.nome;
+      b.appendChild(n); b.appendChild(t);
+      b.setAttribute('aria-label', 'Ver ' + l.nome + ' no mapa');
+      b.addEventListener('click', () => focarLocalidade(l));
+      td0.appendChild(b); tr.appendChild(td0);
       const td = document.createElement('td');
-      const pil = document.createElement('span');
-      pil.className = 'nivel-pilula ' + (l.proporcao >= 0.3 ? 'alto' : l.proporcao >= 0.1 ? 'medio' : 'baixo');
-      pil.textContent = l.alto + ' (' + Math.round(l.proporcao * 100) + '%)';
-      td.appendChild(pil); tr.appendChild(td);
+      td.appendChild(pilula(l.alto + ' (' + Math.round(l.proporcao * 100) + '%)', classeRisco(l.proporcao)));
+      tr.appendChild(td);
       pri.appendChild(tr);
     });
     if (!pri.children.length){ const tr = document.createElement('tr'); const td = celula(tr, 'Nenhuma localidade com alto risco.'); td.colSpan = 2; pri.appendChild(tr); }
@@ -2754,46 +3187,72 @@ dialog#dlgAuditoria[open]{ display:flex; flex-direction:column; }
     desenharMapa(lista);
   }
 
+  function popupLocalidade(l){
+    const pop = document.createElement('div'); pop.className = 'pop';
+    const t = document.createElement('strong'); t.className = 'pop__titulo'; t.textContent = l.nome; pop.appendChild(t);
+    const cl = classeRisco(l.proporcao);
+    const linhaRisco = document.createElement('div'); linhaRisco.className = 'pop__risco';
+    linhaRisco.appendChild(pilula(ROTULO_RISCO[cl], cl));
+    const pc = document.createElement('span'); pc.textContent = Math.round(l.proporcao * 100) + '% dos atendimentos'; linhaRisco.appendChild(pc);
+    pop.appendChild(linhaRisco);
+    const grade = document.createElement('div'); grade.className = 'pop__grade';
+    [[l.total, 'atendimentos'], [l.alto, 'alto risco'], [l.focos == null ? '—' : l.focos, 'focos do vetor']].forEach((par) => {
+      const c = document.createElement('div'); const v = document.createElement('b'); v.textContent = String(par[0]);
+      const r = document.createElement('span'); r.textContent = par[1]; c.appendChild(v); c.appendChild(r); grade.appendChild(c);
+    });
+    pop.appendChild(grade);
+    if (l.proj){
+      const d = document.createElement('div'); d.className = 'pop__linha';
+      d.textContent = 'Tendência: ' + (ROTULO_TEND_SETA[l.proj.tendencia] || '—');
+      if (l.proj.casos_previstos.length) d.textContent += ' · previsão próxima semana: ' + l.proj.casos_previstos[0];
+      pop.appendChild(d);
+      if (temExpansao(l)){
+        const e = document.createElement('div'); e.className = 'pop__linha pop__linha--exp';
+        e.textContent = 'Risco de expansão ' + ROTULO_EXPANSAO[l.proj.risco_de_expansao].toLowerCase() + ', perto de ' + l.proj.vizinhas_em_crescimento.map((v) => v.localidade).join('; ');
+        pop.appendChild(e);
+      }
+    }
+    return pop;
+  }
+
   function desenharMapa(lista){
     const alvo = $('mapaLeaflet');
     if (!window.L){
       alvo.innerHTML = '';
       const p = document.createElement('p'); p.className = 'mapa-erro';
-      p.textContent = 'O mapa não pôde ser carregado (sem internet ou biblioteca bloqueada). Use “Ver como tabela”.';
+      p.textContent = 'O mapa não pôde ser carregado (sem internet). Use “Ver como tabela”.';
       alvo.style.height = 'auto'; alvo.appendChild(p);
       return;
     }
+    const L = window.L;
     if (!mapa){
-      mapa = window.L.map(alvo).setView([-3.119, -60.021], 11);
-      window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; contribuidores do OpenStreetMap' }).addTo(mapa);
-      camada = window.L.layerGroup().addTo(mapa);
+      mapa = L.map(alvo, { zoomControl: true, scrollWheelZoom: false }).setView([-3.119, -60.021], 11);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18,
+        attribution: '&copy; contribuidores do <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
+      camada = L.layerGroup().addTo(mapa);
+      mapa.on('click', () => { mapa.scrollWheelZoom.enable(); });
     }
-    camada.clearLayers();
+    camada.clearLayers(); marcadores.clear();
+    const maior = Math.max.apply(null, lista.map((x) => x.total).concat([1]));
     const pontos = [];
     lista.forEach((l) => {
-      const expansao = l.proj && l.proj.risco_de_expansao && l.proj.risco_de_expansao !== 'NENHUM';
-      const c = window.L.circleMarker([l.lat, l.lon], {
-        radius: Math.min(30, 8 + Math.sqrt(l.total) * 3),
-        color: expansao ? '#16231F' : corRisco(l.proporcao), weight: expansao ? 3 : 1.5, dashArray: expansao ? '5 4' : null,
-        fillColor: corRisco(l.proporcao), fillOpacity: 0.7,
+      const cl = classeRisco(l.proporcao);
+      const diam = Math.round(34 + 34 * Math.sqrt(l.total / maior));
+      const icone = L.divIcon({
+        className: 'pino-wrap',
+        html: '<span class="pino pino--' + cl + (temExpansao(l) ? ' pino--expansao' : '') + '" style="width:' + diam + 'px;height:' + diam + 'px;">' + l.total + '</span>',
+        iconSize: [diam, diam], iconAnchor: [diam / 2, diam / 2], popupAnchor: [0, -diam / 2],
       });
-      const pop = document.createElement('div');
-      const t = document.createElement('strong'); t.textContent = l.nome; pop.appendChild(t);
-      const linhas = [
-        l.total + ' atendimento(s), ' + l.alto + ' de alto risco',
-        l.focos == null ? 'Focos do vetor: indisponível' : 'Focos do vetor: ' + l.focos,
-      ];
-      if (l.proj){
-        linhas.push('Tendência: ' + ROTULO_TENDENCIA[l.proj.tendencia]);
-        if (l.proj.casos_previstos.length) linhas.push('Previsão para a próxima semana: ' + l.proj.casos_previstos[0] + ' atendimento(s)');
-        if (expansao) linhas.push('Risco de expansão: ' + ROTULO_EXPANSAO[l.proj.risco_de_expansao] + ' (perto de ' + l.proj.vizinhas_em_crescimento.map((v) => v.localidade).join('; ') + ')');
-      }
-      linhas.forEach((x) => { const d = document.createElement('div'); d.textContent = x; pop.appendChild(d); });
-      c.bindPopup(pop);
-      c.addTo(camada);
+      const m = L.marker([l.lat, l.lon], {
+        icon: icone, keyboard: true, title: l.nome + ': ' + l.total + ' atendimentos, ' + l.alto + ' de alto risco',
+        alt: l.nome, riseOnHover: true,
+      });
+      m.bindPopup(popupLocalidade(l), { maxWidth: 280, className: 'pop-wrap' });
+      m.addTo(camada);
+      marcadores.set(l.chave, m);
       pontos.push([l.lat, l.lon]);
     });
-    if (pontos.length) mapa.fitBounds(pontos, { padding: [30, 30], maxZoom: 14 });
+    if (pontos.length) mapa.fitBounds(pontos, { padding: [40, 40], maxZoom: 14 });
     window.setTimeout(() => mapa.invalidateSize(), 50);
   }
 

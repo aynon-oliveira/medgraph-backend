@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends
 from neo4j import GraphDatabase
 from sqlalchemy import text
@@ -7,6 +9,7 @@ from app.core.config import settings
 from app.core.database import get_db
 
 router = APIRouter(tags=["Saúde da API"])
+logger = logging.getLogger("medgraph.health")
 
 
 @router.get("/health")
@@ -20,7 +23,7 @@ def health(db: Session = Depends(get_db)):
         db.execute(text("SELECT PostGIS_Version()"))
         estado["postgis"] = "ok"
     except Exception as exc:  # noqa: BLE001
-        estado["postgres_detalhe"] = str(exc)[:120]
+        logger.warning("Falha no PostgreSQL: %s", str(exc)[:200])
 
     try:
         driver = GraphDatabase.driver(
@@ -30,6 +33,6 @@ def health(db: Session = Depends(get_db)):
         driver.close()
         estado["neo4j"] = "ok"
     except Exception as exc:  # noqa: BLE001
-        estado["neo4j_detalhe"] = str(exc)[:120]
+        logger.warning("Falha no Neo4j: %s", str(exc)[:200])
 
     return estado

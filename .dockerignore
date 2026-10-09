@@ -1,0 +1,20 @@
+# O que NAO entra na imagem Docker (segredos, dados e lixo). O .env chega ao container em tempo de execucao (env_file).
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.venv
+.venv-ml
+__pycache__
+*.pyc
+.pytest_cache
+uploads
+*.csv
+DENGBR*
+ml/dados
+*.bak-*
+*.ANTES-*.json
+tunel.txt
+site
+p24novo

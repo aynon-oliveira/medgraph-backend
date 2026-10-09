@@ -17,6 +17,7 @@ from app.core.deps import get_current_user, require_perfil
 from app.models import Atendimento, Paciente, Perfil, Usuario
 from app.routers.midia import _atendimento_visivel
 from app.services import auditoria_service, gemini_service, midia_service
+from app.services.imagem_limpa import remover_metadados
 
 router = APIRouter(tags=["Assistente de IA (Gemini)"])
 
@@ -110,7 +111,7 @@ def descrever_foto(
     if caminho is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Este atendimento não tem foto.")
     _exigir_ligado()
-    imagem = caminho.read_bytes()
+    imagem = remover_metadados(caminho.read_bytes())  # passo 28: fotos antigas também saem sem GPS
     mime = midia_service.tipo_do_arquivo(caminho)
     texto = _chamar(medico, lambda: gemini_service.gerar(
         gemini_service.INSTRUCAO_FOTO,
