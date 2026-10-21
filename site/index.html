@@ -62,7 +62,7 @@
 }
 
 *{ box-sizing:border-box; }
-html{ font-size:var(--fs-base); scroll-behavior:smooth; }
+html{ font-size:calc(var(--fs-base) * var(--fs-scale)); scroll-behavior:smooth; }
 body{
   margin:0;
   background:var(--fundo);
@@ -71,7 +71,7 @@ body{
   background-repeat:no-repeat;
   color:var(--texto);
   font-family:var(--fonte-corpo);
-  font-size:calc(1rem * var(--fs-scale));
+  font-size:1rem;
   line-height:1.55;
   -webkit-font-smoothing:antialiased;
 }
@@ -632,6 +632,8 @@ body.alto-contraste .barra-a11y button{ border-color:#FFE600; color:#FFE600; }
 body.alto-contraste .barra-a11y button[aria-pressed="true"]{ background:#FFE600; color:#000; }
 body.alto-contraste .marca__nome, body.alto-contraste .pagina-titulo, body.alto-contraste .painel__titulo, body.alto-contraste .indicador__valor{ color:#fff; }
 body.alto-contraste input, body.alto-contraste select, body.alto-contraste textarea{ background:#000; color:#fff; border:2px solid #fff; }
+body.alto-contraste .campo input, body.alto-contraste .campo select, body.alto-contraste .campo textarea, body.alto-contraste .filtro-campo select, body.alto-contraste dialog.caixa .campo input{ background:#000; color:#fff; border:2px solid #fff; color-scheme:dark; }
+body.alto-contraste .campo input::placeholder, body.alto-contraste .campo textarea::placeholder{ color:#D9D9D9; }
 body.alto-contraste .btn-primario, body.alto-contraste .btn-gravar, body.alto-contraste .contador{ background:#FFE600; color:#000; border:2px solid #FFE600; }
 body.alto-contraste .btn-primario:hover{ background:#fff; border-color:#fff; box-shadow:none; }
 body.alto-contraste .btn-secundario, body.alto-contraste .btn-mini, body.alto-contraste .btn-conta, body.alto-contraste .btn-aba, body.alto-contraste .painel__acao{
@@ -3087,6 +3089,7 @@ body.alto-contraste .chip-sel__x, body.alto-contraste .seletor--alarme .chip-sel
           chave: pr.chave, nome: pr.localidade, total: pr.total_atendimentos, alto: pr.alto_risco,
           proporcao: pr.proporcao_alto_risco, focos: pr.focos,
           lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1],
+          aproximada: pr.localizacao_aproximada === true,   // localidade com menos de 3 casos: ponto menos preciso (privacidade)
           proj: proj.get(pr.chave) || null,
         };
       });
@@ -3151,6 +3154,7 @@ body.alto-contraste .chip-sel__x, body.alto-contraste .seletor--alarme .chip-sel
     lista.slice().sort((a, b) => b.total - a.total).forEach((l) => {
       const tr = document.createElement('tr');
       const nome = celula(tr, l.nome); nome.className = 'col-nome';
+      if (l.aproximada){ nome.appendChild(document.createTextNode(' ')); const ap = etiqueta('Local aproximado', 'aprox'); ap.title = 'Poucos casos nesta localidade: o ponto no mapa é aproximado para proteger a identidade dos pacientes.'; nome.appendChild(ap); }
       celula(tr, String(l.total));
       const tdAlto = document.createElement('td'); tdAlto.appendChild(pilula(l.alto + ' (' + Math.round(l.proporcao * 100) + '%)', classeRisco(l.proporcao))); tr.appendChild(tdAlto);
       celula(tr, l.focos == null ? '—' : String(l.focos));
@@ -3190,6 +3194,7 @@ body.alto-contraste .chip-sel__x, body.alto-contraste .seletor--alarme .chip-sel
   function popupLocalidade(l){
     const pop = document.createElement('div'); pop.className = 'pop';
     const t = document.createElement('strong'); t.className = 'pop__titulo'; t.textContent = l.nome; pop.appendChild(t);
+    if (l.aproximada){ const ap = document.createElement('div'); ap.className = 'pop__linha'; ap.textContent = 'Localização aproximada (menos de 3 casos): o ponto não indica o endereço real.'; pop.appendChild(ap); }
     const cl = classeRisco(l.proporcao);
     const linhaRisco = document.createElement('div'); linhaRisco.className = 'pop__risco';
     linhaRisco.appendChild(pilula(ROTULO_RISCO[cl], cl));
